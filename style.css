@@ -1,0 +1,1559 @@
+/*
+Theme Name: RevampPage
+Version: 1.0
+Description: A custom theme based on Figma design
+Author: Lester
+*/
+
+:root {
+    --bg: #0f0b1a;
+    --card-bg: #1b1330;
+    --accent: #ff6a00;
+    --text: #fff;
+    /* sizes */
+    --card-large-w: 352px;
+    --card-large-h: 538px;
+    --card-scale-other: 0.8; /* other cards are 75% of large */
+    --card-small-w: calc(var(--card-large-w) * var(--card-scale-other));
+    --card-small-h: calc(var(--card-large-h) * var(--card-scale-other));
+    --gap: calc(min(3vh, 3vw));
+    --transition: 300ms;
+    --title-font-size-h3: 2.5rem;
+    --title-font-size-h2: 1.8rem;
+    --title-button-size: 1.5rem;
+}
+
+h3 {
+    font-size: var(--title-font-size-h3);
+    text-align: center;
+    color: #fff;
+    margin-bottom: 15px;
+}
+    h3 .part1 {
+        color: #C075F4; /* 紫色 */
+    }
+
+    h3 .part2 {
+        color: #fff;
+    }
+
+h2 {
+    font-size: var(--title-font-size-h2);
+    text-align: center;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+    h2 .part1 {
+        color: #C075F4; /* 紫色 */
+    }
+
+    h2 .part2 {
+        color: #fff;
+    }
+
+/* Use default theme background only when a custom background is NOT active.
+   WP adds the `custom-background` class on <body> when a custom background is set. */
+body:not(.custom-background) {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans TC", "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* 容器 */
+.kwycc-hero {
+    padding: 40px 20px;
+    overflow: visible;
+}
+
+/* 控制列高度與滑鼠拖曳提示 */
+.kwycc-scroll-wrap .drag-hint {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    font-size: 12px;
+    opacity: 0.6;
+}
+/* CTA 區塊 */
+.kwycc-video {
+    margin-top: 40px;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+/* Header */
+.kwycc-site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    position: relative;
+    z-index: 50;
+}
+
+.site-left .site-logo img {
+    width: 56px;
+    height: 56px;
+    border-radius: 6px;
+    margin-left: calc(min(6vh, 6vw));
+}
+
+/* 右上按鈕 */
+.site-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.kwycc-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 300ms ease;
+}
+
+    .kwycc-btn:hover {
+        opacity: 0.8;
+    }
+
+    .kwycc-btn:active {
+        opacity: 0.6;
+    }
+
+    .kwycc-btn .btn-icon {
+        height: 24px;
+        object-fit: contain;
+        display: block;
+    }
+    .kwycc-btn .btn-label {
+        position: relative;
+        top: -1px; /* 往上移一點 */
+        right: -60%; /* 稍微偏右 */
+        font-size: 12px;
+        color: #fff;
+    }
+    .kwycc-btn .btn-text {
+        font-size: calc(min(2.5vh, 2.5vw));
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+/* Icon-only on mobile, icon + text on desktop */
+@media (max-width: 640px) {
+    .kwycc-btn .btn-text {
+        display: none;
+    }
+
+    .kwycc-btn {
+        padding: 8px;
+    }
+
+        .kwycc-btn .btn-label {
+            top: calc(min(0.2vh, 0.2vw));
+            font-size: calc(min(2vh, 2.5vw));
+            width: calc(min(10vh, 10vw));
+        }
+}
+
+.kwycc-card .card-media img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+}
+/* header 透明背景 */
+.kwycc-site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: transparent; /* 移除背景 */
+    box-shadow: none; /* 若父主題有陰影也移除 */
+    text-decoration: none;
+}
+
+/* logo 容器：不裁切，保留原始比例 */
+.site-left .site-logo,
+.site-left .custom-logo-link {
+    display: inline-block;
+    width: auto; /* 讓寬度依內容或 max-width 控制 */
+    max-width: 160px; /* 視需求調整最大寬度 */
+    height: auto;
+    overflow: visible; /* 確保不裁切 */
+    padding: 0;
+    margin: 0;
+}
+
+    /* 若 WP 輸出 <img class="custom-logo">，確保不被裁切 */
+    .site-left img.custom-logo,
+    .site-left .site-logo img {
+        width: 100%;
+        height: auto;
+        object-fit: contain; /* 保持比例，不裁切 */
+        display: block;
+    }
+
+/* 若你想限制高度但保留比例（例如 header 高度 56px） */
+.site-left .site-logo,
+.site-left .custom-logo-link {
+    max-height: 56px;
+}
+
+    .site-left img.custom-logo,
+    .site-left .site-logo img {
+        max-height: 56px;
+        width: auto;
+        height: auto;
+    }
+
+/* 若父主題對 header 或 logo 有 overflow:hidden，強制覆蓋 */
+.kwycc-site-header,
+.kwycc-site-header * {
+    overflow: visible !important;
+    background-color: transparent !important;
+    text-decoration: none;
+}
+
+/* 保持 logo 原始比例，不裁切 */
+.site-logo {
+    display: inline-block;
+    max-width: 220px;
+    max-height: 80px;
+}
+
+.site-logo-img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+
+/* scroll wrap: hide native scrollbar and center first card by padding */
+.kwycc-scroll-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+/* 在 .kwycc-scroll-wrap 規則後添加 */
+.kwycc-scroll-wrap {
+    width: 100%;
+    margin: 2% auto;
+    height: calc(var(--card-large-h) + 40px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: auto;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    transform: scale(1);
+    /* --- 新增：Mask Shadow 效果 --- */
+    mask-image: linear-gradient(90deg, transparent 0%, transparent 2%, black 8%, black 92%, transparent 98%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 2%, black 8%, black 92%, transparent 98%, transparent 100%);
+}
+    .kwycc-scroll-wrap::before {
+        left: 0;
+        background: linear-gradient(90deg, rgba(15, 11, 26, 0.9) 0%, transparent 100%);
+    }
+
+    .kwycc-scroll-wrap::after {
+        right: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(15, 11, 26, 0.9) 100%);
+    }
+
+/* ✅ 左右導航按鈕 */
+.kwycc-scroll-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: calc(min(10vh, 10vw));
+    height: calc(min(10vh, 10vw));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(192, 117, 244, 0.5);
+    border: 1px solid rgba(192, 117, 244, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 300ms ease;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    user-select: none;
+}
+
+    .kwycc-scroll-nav:hover {
+        background: rgba(192, 117, 244, 0.6);
+        border-color: rgba(192, 117, 244, 1);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .kwycc-scroll-nav:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+.kwycc-scroll-nav-left {
+    left: 0;
+}
+
+.kwycc-scroll-nav-right {
+    right: 0;
+}
+
+    /* hide scrollbars (webkit + firefox + ie) */
+    .kwycc-scroll-wrap::-webkit-scrollbar {
+        display: none;
+        height: 0;
+    }
+    .kwycc-scroll-wrap.dragging {
+        cursor: grabbing;
+        user-select: none;
+    }
+
+
+
+/* inner row */
+.kwycc-scroll {
+    display: flex;
+    gap: var(--gap);
+    align-items: center;
+    width: max-content;
+    padding: 8px 0;
+    box-sizing: border-box;
+}
+
+.kwycc-scroll-container.hide-nav .kwycc-scroll-nav {
+    display: none;
+}
+
+
+/* Replace the previous first-child large rule and ensure active-based sizing.
+   Add these snippets into your style.css (they replace the earlier .kwycc-card:first-child rule). */
+.kwycc-card {
+    flex: 0 0 var(--card-small-w);
+    height: var(--card-small-h);
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 14px;
+    box-sizing: border-box;
+    color: var(--text);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+    transition: flex-basis 300ms cubic-bezier(.22,.9,.28,1), height 300ms cubic-bezier(.22,.9,.28,1), box-shadow 300ms;
+    scroll-snap-align: center;
+    scroll-snap-stop: always; /* 確保停在該卡 */
+    min-width: 0; /* 防止內容撐開 */
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+    /* centered card (when JS adds .active) becomes the large card (100%) */
+    .kwycc-card.active {
+        flex-basis: var(--card-large-w);
+        height: var(--card-large-h);
+        border-radius: 18px;
+    }
+
+    /* media area at top, takes up most space */
+    .kwycc-card .card-media {
+        overflow: hidden;
+        min-height: 120px; /* 你原本有的下限 */
+        height: 100%; /* 如果父層有明確高度，這會生效 */
+    }
+
+    .kwycc-card.active .card-media {
+        flex: 1;
+    }
+
+    /* text content at bottom */
+    .kwycc-card h3 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        color: var(--text);
+        flex-shrink: 0;
+        line-height: 1.3;
+    }
+
+    .kwycc-card.active h3 {
+        font-size: 16px;
+        margin: 0 0 6px 0;
+    }
+
+    .kwycc-card p {
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.85;
+        color: var(--text);
+        flex-shrink: 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .kwycc-card.active p {
+        font-size: 13px;
+        opacity: 1;
+        -webkit-line-clamp: 3;
+    }
+
+/* Card Content Styling */
+.card-content {
+    display: flex;
+    flex-direction: row;
+    grid-template-columns: 1.2fr 1fr;
+    gap: calc(min(2vh, 2vw));
+    padding: calc(min(2vh, 2vw));
+    align-items: stretch; /* 或 center */
+}
+
+.card-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.card-deadline {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.2;
+}
+.card-info {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-top: auto;
+    flex: 0 1 70%;
+}
+/* Card Footer with Seats Status */
+.card-footer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-top: auto;
+    flex: 0 1 30%;
+}
+
+
+/* Active card styling */
+.kwycc-card.active .card-title {
+    font-size: 16px;
+}
+
+.kwycc-card.active .card-deadline {
+    font-size: 13px;
+}
+
+.kwycc-card.active .card-status {
+    font-size: 12px;
+}
+
+/* Clickable card link */
+.card-link {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+}
+
+.card-title-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    display: block;
+    flex: 1;
+}
+
+    .card-title-link:hover {
+        color: #C075F4;
+    }
+
+.card-status-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    display: block;
+    position: relative;
+    z-index: 2;
+}
+
+    .card-status-link:hover .card-status {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+
+/* Updated card-status styling */
+.card-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    transition: all 300ms ease;
+    display: inline-block;
+}
+
+    .card-status.seats {
+        color: #000000;
+    }
+
+    .card-status.full {
+        color: #ff0000;
+    }
+
+.kwycc-card.active .card-status.seats {
+}
+
+.kwycc-card .card-media img,
+.kwycc-card img {
+    height: 106%;
+}
+
+    /* text */
+    .kwycc-card h3 {
+        margin: 6px 0 8px;
+        font-size: 16px;
+        color: var(--text);
+    }
+
+.kwycc-card p {
+    margin-top: 3%;
+    font-size: 13px;
+    opacity: .9;
+    color: var(--text);
+}
+
+/* when JS marks the row has-active (centered active card), increase gap to avoid overlap */
+.kwycc-scroll.has-active {
+    gap: calc(var(--gap) + (var(--card-large-w) - var(--card-small-w)) * 0.3);
+}
+
+/* responsive */
+@media (max-width: 1024px) {
+    :root {
+        --card-large-w: 320px;
+        --card-large-h: 488px;
+        --gap: 50px;
+    }
+
+    .kwycc-scroll-wrap {
+        padding: 0 calc(50% - (var(--card-large-w) / 2));
+        transform: scale(1);
+    }
+
+    .kwycc-card:first-child {
+        flex: 0 0 var(--card-large-w);
+        height: var(--card-large-h);
+    }
+
+    .kwycc-card {
+        height: var(--card-small-h);
+    }
+        .kwycc-card.active {
+            flex-basis: var(--card-large-w);
+            height: var(--card-large-h);
+            border-radius: 18px;
+        }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --card-large-w: 300px;
+        --card-large-h: 460px;
+        --card-scale-other: 0.78;
+        --gap: 18px;
+    }
+
+    .kwycc-scroll-wrap {
+        padding: 0 calc(50% - (var(--card-large-w) / 2));
+        height: calc(var(--card-large-h) + 30px);
+    }
+
+    .kwycc-card {
+        flex: 0 0 var(--card-small-w);
+        height: var(--card-small-h);
+    }
+
+        .kwycc-card:first-child {
+            flex: 0 0 var(--card-large-w);
+            height: var(--card-large-h);
+        }
+
+        .kwycc-card .card-media {
+            height: 65%;
+        }
+}
+
+/* small helpers */
+.kwycc-scroll-wrap .drag-hint {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    font-size: 12px;
+    opacity: .6;
+}
+
+/* ========================================
+   HEADER & NAVIGATION MENUS
+   ======================================== */
+
+/* Menu wrappers - positioned relative for dropdown */
+.kwycc-lang-wrapper,
+.kwycc-menu-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Generic dropdown menu styling */
+.kwycc-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--card-bg) !important;
+    border-radius: 8px;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 300ms ease, visibility 300ms ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-top: 8px;
+    pointer-events: auto;
+}
+
+.kwycc-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Language menu specific */
+.kwycc-lang-menu {
+    min-width: 140px;
+    padding: 8px 0;
+}
+
+.kwycc-lang-menu a {
+    display: block;
+    padding: 10px 16px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 200ms ease;
+}
+
+.kwycc-lang-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main menu dropdown styling */
+.kwycc-main-nav {
+    min-width: 220px;
+    padding: 8px 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Language menu containers */
+.kwycc-menu-lang {
+    transition: opacity 300ms ease;
+}
+
+    /* Ensure menu lists display properly */
+    .kwycc-menu-lang .kwycc-menu-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .kwycc-menu-lang .kwycc-menu-list li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+            .kwycc-menu-lang .kwycc-menu-list li:last-child {
+                border-bottom: none;
+            }
+
+        .kwycc-menu-lang .kwycc-menu-list a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 200ms ease, color 200ms ease;
+        }
+
+            .kwycc-menu-lang .kwycc-menu-list a:hover {
+                background-color: rgba(255, 106, 0, 0.1);
+                color: var(--accent);
+            }
+
+        .kwycc-menu-lang .kwycc-menu-list li.current-menu-item > a {
+            color: var(--accent);
+            background-color: rgba(255, 106, 0, 0.05);
+        }
+
+        /* Submenu styling */
+        .kwycc-menu-lang .kwycc-menu-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+            .kwycc-menu-lang .kwycc-menu-list ul a {
+                padding-left: 32px;
+                font-size: 13px;
+            }
+
+            .kwycc-menu-lang .kwycc-menu-list ul li:last-child a {
+                border-bottom: none;
+            }
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .kwycc-lang-wrapper,
+    .kwycc-menu-wrapper {
+        position: static;
+    }
+
+    .kwycc-dropdown-menu {
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        left: auto;
+        width: auto;
+        min-width: auto;
+    }
+
+    .kwycc-main-nav {
+        min-width: auto;
+        width: calc(100vw - 40px);
+        max-height: calc(100vh - 100px);
+    }
+}
+
+
+/* ========================================
+   VIDEO SECTION STYLING
+   ======================================== */
+
+.kwycc-video {
+    margin-top: 60px;
+    padding: 40px 20px;
+    border-radius: 12px;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Video title at top */
+.video-title {
+    text-align: center;
+    color: #fff;
+    margin: 0 0 40px 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+    .video-title .part1 {
+        color: #C075F4;
+        font-weight: 700;
+    }
+
+    .video-title .part2 {
+        color: #fff;
+        font-weight: 600;
+    }
+
+/* Main video content layout */
+.video-content {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+/* Left side - Video player (larger proportion) */
+.video-player {
+    flex: 1;
+    min-width: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 2rem;
+    padding: calc(min(4.5vh, 4.5vw));
+}
+
+.video-wrap {
+    width: 100%;
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 2rem;
+    background: #000;
+}
+
+    .video-wrap iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+/* Right side - Info (smaller proportion) */
+.video-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    padding-right: 30px;
+}
+
+.video-heading {
+    font-size: calc(min(3.5vh, 3.5vw));
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.4;
+    margin: 0 0 calc(min(3.5vh, 3.5vw)) 0;
+    text-align: left;
+}
+
+.video-description {
+    font-size: calc(min(2.5vh, 2.5vw));
+    color: rgba(255, 255, 255, 1);
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+    opacity: 0.9;
+    max-width: 75%
+}
+
+/* Arrow button on the right */
+.video-link {
+    position: absolute;
+    top: 50%;
+    right: 10%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 300ms ease;
+    cursor: pointer;
+}
+
+    .video-link:hover {
+        transform: translateY(-50%) translateX(5px);
+    }
+
+    .video-link img {
+        height: calc(min(5vh, 5vw));
+        object-fit: contain;
+        display: block;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .video-content {
+        grid-template-columns: 1.1fr 1fr;
+        gap: 30px;
+    }
+
+    .video-heading {
+        font-size: 22px;
+    }
+
+    .video-description {
+        font-size: 12px;
+    }
+
+    .video-info {
+        padding-right: 20px;
+    }
+
+    .video-player {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .kwycc-video {
+        margin-top: 40px;
+        padding: 30px 16px;
+    }
+
+    .video-title {
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+    }
+
+    .video-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .video-player {
+        padding: 12px;
+    }
+
+    .video-wrap {
+        padding-bottom: 56.25%;
+    }
+
+    .video-info {
+        padding-right: 0;
+    }
+
+    .video-heading {
+        font-size: 20px;
+    }
+
+    .video-description {
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+
+    .video-link {
+        width: 40px;
+        height: 40px;
+    }
+
+        .video-link img {
+            width: 18px;
+            height: 18px;
+        }
+}
+
+@media (max-width: 480px) {
+    .kwycc-video {
+        padding: 20px 12px;
+    }
+
+    .video-title {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+
+    .video-heading {
+        font-size: 18px;
+    }
+
+    .video-description {
+        font-size: 11px;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+
+    .video-info {
+        padding-right: 0;
+    }
+
+    .video-link {
+        width: 35px;
+        height: 35px;
+    }
+
+        .video-link img {
+            width: 16px;
+            height: 16px;
+        }
+}
+
+/* ========================================
+   KNOW SECTION - 會所架構知多點
+   ======================================== */
+
+.know-content {
+    display: grid;
+    grid-template-columns: 1.5fr 1.4fr;
+    gap: 10px;
+    align-items: center;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-49.5vw + 50%);
+}
+
+.know-text {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-left: 15%;
+}
+
+.know-desc {
+    font-size: calc(min(2.5vh, 2.5vw));
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.know-image {
+    width: 70%;
+    padding:5%
+}
+
+    .know-image img {
+        width: 100%;
+        border-radius: 16px;
+        display: block;
+    }
+
+@media (max-width: 1024px) {
+    .know-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    .know-text {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 5%;
+        margin:0;
+    }
+
+    .know-desc {
+        font-size: 12px;
+    }
+    .know-image {
+        width: 85%;
+        padding: 5%;
+        margin: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .know-content {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .kwycc-know-section {
+        padding: 40px 20px;
+    }
+
+    .know-desc {
+        font-size: 12px;
+        line-height: 1.7;
+    }
+}
+
+@media (max-width: 480px) {
+    .know-desc {
+        font-size: 11px;
+    }
+}
+
+/* ========================================
+   SMARTEEN SECTION - 必學小知識
+   ======================================== */
+
+.kwycc-smarteen-section {
+    padding: 60px 20px;
+}
+
+.smarteen-content {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.smarteen-image {
+    width: 100%;
+}
+
+    .smarteen-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+.smarteen-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.smarteen-card {
+    background: linear-gradient(135deg, rgba(192, 117, 244, 0.2) 0%, rgba(138, 43, 226, 0.1) 100%);
+    border: 1px solid rgba(192, 117, 244, 0.3);
+    border-radius: calc(min(5vh, 5vw));
+    padding: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.smarteen-title {
+    font-size: calc(min(3.5vh, 3.5vw));
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 15px 0;
+    text-align: left;
+}
+
+.smarteen-desc {
+    font-size: calc(min(2.5vh, 2.5vw));
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 1);
+    margin: 0 0 15px 0;
+}
+
+.smarteen-contact {
+    font-size: calc(min(2.5vh, 2.5vw));
+    color: rgba(255, 255, 255, 1);
+    margin: 0;
+}
+
+    .smarteen-contact p {
+        margin: 8px 0;
+        line-height: 1.6;
+    }
+
+@media (max-width: 768px) {
+    .smarteen-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .smarteen-card {
+        padding: 20px;
+    }
+
+    .smarteen-title {
+        font-size: 1.2rem;
+    }
+
+    .kwycc-smarteen-section {
+        padding: 40px 20px;
+    }
+}
+
+/* ========================================
+   NEWSLETTER SECTION - 電子通訊
+   ======================================== */
+
+.kwycc-newsletter-section {
+    padding: 60px 20px 40px;
+}
+
+.newsletter-wrapper {
+    display: grid;
+    grid-template-columns: 1.3fr 1.2fr;
+    gap: 20px;
+    align-items: flex-start;
+    padding-left: 25%;
+}
+
+/* Left side - Newsletter form */
+.newsletter-left {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 10%;
+}
+
+.newsletter-title {
+    margin: 0;
+    font-size: calc(min(3.5vh, 3.5vw));
+    font-weight: 700;
+    text-align: left;
+    color: #fff;
+}
+
+.newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    gap: 10px;
+}
+
+.form-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0);
+    border: 1px solid rgba(255, 255, 255, 1);
+    border-radius: calc(min(3.5vh, 3.5vw));
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 300ms ease;
+}
+
+    .form-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .form-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #C075F4;
+        box-shadow: 0 0 10px rgba(192, 117, 244, 0.3);
+    }
+
+.form-submit {
+    padding: 12px 32px;
+    background: #7e64f7;
+    border: none;
+    border-radius: calc(min(3.5vh, 3.5vw));
+    color: #fff;
+    font-size: calc(min(2.5vh, 2.5vw));
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 300ms ease;
+    white-space: nowrap;
+    width: 100%;
+    margin-top: 20px;
+}
+
+    .form-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(192, 117, 244, 0.4);
+    }
+
+    .form-submit:active {
+        transform: translateY(0);
+    }
+
+/* Right side - Newsletter right container */
+.newsletter-right {
+    display: flex;
+    flex-direction: column;
+    gap: 110px;
+    padding:5%;
+    margin:auto;
+}
+
+/* Top part - Navigation links in 4 columns */
+.newsletter-top {
+    display: flex;
+    flex-direction: row;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 60px;
+}
+
+.newsletter-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.newsletter-link-title {
+    margin: 0;
+    font-size: calc(min(2.5vh, 2.5vw));
+    font-weight: 700;
+    color: #fff;
+    text-align: left;
+}
+
+.newsletter-column a {
+    color: #fff;
+    font-size: calc(min(2.5vh, 2.5vw));
+    font-weight: 700;
+    text-align: left;
+    transition: color 300ms ease;
+    text-decoration: none;
+}
+
+    .newsletter-column a:hover {
+        color: #C075F4;
+    }
+
+/* Bottom part - Privacy & Copyright info */
+.newsletter-bottom {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: calc(min(2.5vh, 2.5vw));
+    font-weight: 700;
+}
+
+    .newsletter-bottom a {
+        color: rgba(255, 255, 255, 1);
+        text-decoration: none;
+        transition: color 300ms ease;
+    }
+
+        .newsletter-bottom a:hover {
+            color: #C075F4;
+        }
+
+    .newsletter-bottom .separator {
+        color: rgba(255, 255, 255, 1);
+    }
+
+    .newsletter-bottom .copyright {
+        margin: 0;
+        color: rgba(255, 255, 255, 1);
+    }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .kwycc-newsletter-section {
+        padding: 40px 20px;
+    }
+
+    .newsletter-wrapper {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding-left: 0%;
+    }
+
+    .newsletter-top {
+        grid-template-columns: 1fr;
+    }
+
+    .form-submit {
+        width: 100%;
+    }
+
+    .newsletter-bottom {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.container {
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+}
+
+    .section-title .part1 {
+        color: #C075F4;
+        font-weight: 700;
+    }
+
+    .section-title .part2 {
+        color: #fff;
+    }
+
+@media (max-width: 768px)
+{
+    .section-title {
+        font-size: 1.2rem;
+    }
+}
+/* ========================================
+   FOOTER STYLING
+   ======================================== */
+/* FOOTER: full-bleed background without causing horizontal scroll */
+.kwycc-footer {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* constrain inner content and keep horizontal padding inside footer */
+.footer-container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Social Links */
+.footer-social {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.social-link {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 300ms ease;
+    position: relative;
+}
+
+    .social-link svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .social-link:hover {
+        color: #fff;
+        transform: translateY(-5px);
+    }
+
+    .social-link.whatsapp:hover {
+        color: #25d366;
+    }
+
+    .social-link.youtube:hover {
+        color: #ff0000;
+    }
+
+    .social-link.instagram:hover {
+        color: #e4405f;
+    }
+
+    .social-link.facebook:hover {
+        color: #1877f2;
+    }
+
+/* Back to Top Button */
+.back-to-top {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #C075F4 0%, #caa0f1 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 300ms ease;
+    z-index: 999;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(192, 117, 244, 0.3);
+}
+
+    .back-to-top:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(192, 117, 244, 0.4);
+    }
+
+    .back-to-top.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .back-to-top svg {
+        width: 24px;
+        height: 24px;
+        transform: rotate(0deg);
+        color: black;
+    }
+
+/* Hide WordPress footer credit */
+#colophon,
+.site-footer,
+.wp-footer-content {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .kwycc-footer {
+        padding: 30px 16px;
+        min-height: 100px;
+    }
+
+    .footer-social {
+        gap: 30px;
+    }
+
+    .social-link {
+        width: 45px;
+        height: 45px;
+    }
+
+        .social-link svg {
+            width: 28px;
+            height: 28px;
+        }
+
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 30px;
+        right: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .kwycc-footer {
+        padding: 25px 12px;
+    }
+
+    .footer-social {
+        gap: 25px;
+    }
+
+    .social-link {
+        width: 40px;
+        height: 40px;
+    }
+
+        .social-link svg {
+            width: 24px;
+            height: 24px;
+        }
+
+    .back-to-top {
+        width: 40px;
+        height: 40px;
+        bottom: 20px;
+        right: 20px;
+    }
+
+        .back-to-top svg {
+            width: 20px;
+            height: 20px;
+        }
+}
