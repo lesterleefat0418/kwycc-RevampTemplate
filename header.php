@@ -89,9 +89,9 @@ if (!defined('ABSPATH'))
         <span class="btn-text"></span>
       </button>
       <!-- Main navigation menu - now as dropdown -->
-      <nav id="kwycc-main-nav" class="kwycc-dropdown-menu kwycc-main-nav" aria-label="<?php esc_attr_e('Main menu', 'revamppage'); ?>" data-current-lang="zh">
+        <nav id="kwycc-main-nav" class="kwycc-dropdown-menu kwycc-main-nav" aria-label="<?php esc_attr_e('Main menu', 'revamppage'); ?>" data-current-lang="zh">
         <!-- Chinese Menu -->
-        <div class="kwycc-menu-lang" data-lang="zh" style="display: block;">
+        <div class="kwycc-menu-lang kwycc-menu-lang-active" data-lang="zh">
           <?php
           wp_nav_menu(array(
               'theme_location' => 'primary-menu-zh',
@@ -105,7 +105,7 @@ if (!defined('ABSPATH'))
         </div>
 
         <!-- English Menu -->
-        <div class="kwycc-menu-lang" data-lang="en" style="display: none;">
+        <div class="kwycc-menu-lang" data-lang="en">
           <?php
           wp_nav_menu(array(
               'theme_location' => 'primary-menu-en',

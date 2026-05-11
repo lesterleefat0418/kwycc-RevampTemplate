@@ -263,7 +263,7 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
             <div class="newsletter-column">
               <a href="<?php echo revamppage_menu_url($menu_map, '架構及宗旨'); ?>" class="newsletter-link-title">架構及宗旨</a>
               <a href="<?php echo revamppage_menu_url($menu_map, '全年概覽'); ?>" class="newsletter-column-link">全年概覽</a>
-              <a href="<?php echo revamppage_menu_url($menu_map, 'Smarteen透視'); ?>" class="newsletter-column-link">Smarteen透視</a>
+              <a href="<?php echo revamppage_menu_url($menu_map, 'Smartteen透視'); ?>" class="newsletter-column-link">Smartteen透視</a>
             </div>
             <div class="newsletter-column">
               <a href="<?php echo revamppage_menu_url($menu_map, '活動預告'); ?>" class="newsletter-link-title">活動預告</a>

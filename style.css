@@ -680,10 +680,14 @@ body:not(.custom-background) {
     overflow-y: auto;
 }
 
-/* Language menu containers */
-.kwycc-menu-lang {
-    transition: opacity 300ms ease;
-}
+    /* Language menu containers */
+    .kwycc-menu-lang {
+        display: none !important;
+    }
+    /* Show only the active language menu */
+    .kwycc-menu-lang.kwycc-menu-lang-active {
+        display: block !important;
+    }
 
     /* Ensure menu lists display properly */
     .kwycc-menu-lang .kwycc-menu-list {

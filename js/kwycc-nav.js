@@ -26,16 +26,16 @@
         currentLang = lang;
         localStorage.setItem('revamppage_lang', lang);
 
-        // Hide all language menus
+        // Remove active class from all language menus
         var allMenus = document.querySelectorAll('.kwycc-menu-lang');
         allMenus.forEach(function (menu) {
-            menu.style.display = 'none';
+            menu.classList.remove('kwycc-menu-lang-active');
         });
 
-        // Show the selected language menu
+        // Add active class to the selected language menu
         var selectedMenu = document.querySelector('.kwycc-menu-lang[data-lang="' + lang + '"]');
         if (selectedMenu) {
-            selectedMenu.style.display = 'block';
+            selectedMenu.classList.add('kwycc-menu-lang-active');
         }
 
         // Update the nav attribute
@@ -43,7 +43,7 @@
             mainNav.setAttribute('data-current-lang', lang);
         }
 
-        // Update language button text - just show the selected language abbreviation
+        // Update language button text
         if (langToggle) {
             var textSpan = langToggle.querySelector('.btn-text');
             if (textSpan) {
