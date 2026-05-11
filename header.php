@@ -65,7 +65,7 @@ if (!defined('ABSPATH'))
     <!-- 報名活動 CTA (顯示於語言切換左側) -->
     <a href="<?php echo esc_url($activity_register_url); ?>" class="kwycc-btn kwycc-cta" aria-label="<?php esc_attr_e('報名活動', 'revamppage'); ?>">
         <span class="btn-label">報名活動</span>
-        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/Images/participate_btn.png'); ?>" 
+        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/images/participate_btn.png'); ?>" 
              alt="<?php esc_attr_e('報名活動', 'revamppage'); ?>" 
              class="btn-icon participate-btn"/>
     </a>
@@ -73,7 +73,7 @@ if (!defined('ABSPATH'))
     <!-- Language toggle -->
     <div class="kwycc-lang-wrapper">
       <button id="kwycc-lang-toggle" class="kwycc-btn kwycc-lang" aria-expanded="false" aria-label="<?php esc_attr_e('Toggle language', 'revamppage'); ?>">
-        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/Images/globe.png'); ?>" alt="" class="btn-icon">
+        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/images/globe.png'); ?>" alt="" class="btn-icon">
         <span class="btn-text">繁</span>
       </button>
       <nav id="kwycc-lang-menu" class="kwycc-dropdown-menu kwycc-lang-menu" aria-label="<?php esc_attr_e('Language selection', 'revamppage'); ?>">
@@ -85,7 +85,7 @@ if (!defined('ABSPATH'))
     <!-- Menu toggle -->
     <div class="kwycc-menu-wrapper">
       <button id="kwycc-menu-toggle" class="kwycc-btn kwycc-menu" aria-expanded="false" aria-controls="kwycc-main-nav" aria-label="<?php esc_attr_e('Toggle menu', 'revamppage'); ?>">
-        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/Images/menu.png'); ?>" alt="" class="btn-icon">
+        <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/images/menu.png'); ?>" alt="" class="btn-icon">
         <span class="btn-text"></span>
       </button>
       <!-- Main navigation menu - now as dropdown -->
