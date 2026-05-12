@@ -37,6 +37,10 @@ h3 {
         color: #fff;
     }
 
+body {
+    margin: auto;
+}
+
 h2 {
     font-size: var(--title-font-size-h2);
     text-align: center;
@@ -81,16 +85,6 @@ body:not(.custom-background) {
     margin-top: 40px;
     padding: 20px;
     border-radius: 12px;
-}
-
-/* Header */
-.kwycc-site-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    position: relative;
-    z-index: 50;
 }
 
 .site-left .site-logo img {
@@ -175,7 +169,7 @@ body:not(.custom-background) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px;
+    padding: 12px 55px;
     background: transparent; /* 移除背景 */
     box-shadow: none; /* 若父主題有陰影也移除 */
     text-decoration: none;
@@ -1560,4 +1554,506 @@ body:not(.custom-background) {
             width: 20px;
             height: 20px;
         }
+}
+
+/* ========================================
+   ACTIVITY PAGE STYLING
+   ======================================== */
+
+.kwycc-activity-page {
+    min-height: 100vh;
+}
+
+/* Hero Section */
+.activity-hero {
+    position: relative;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-49.5vw + 50%);
+}
+
+.activity-hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+    .activity-hero-bg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.activity-hero-title {
+    position: relative;
+    z-index: 2;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.1);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* Activity Container */
+.activity-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+/* Filters Section */
+.activity-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.activity-category-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.activity-sort-wrapper {
+    position: relative;
+}
+
+.activity-sort-dropdown {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #C075F4 0%, #8A2BE2 100%);
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 300ms ease;
+}
+
+    .activity-sort-dropdown:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(192, 117, 244, 0.4);
+    }
+
+/* Activity List */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Activity Card */
+.activity-card {
+    background: linear-gradient(135deg, rgba(192, 117, 244, 0.1) 0%, rgba(138, 43, 226, 0.05) 100%);
+    border: 1px solid rgba(192, 117, 244, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 300ms ease;
+    cursor: pointer;
+}
+
+    .activity-card:hover {
+        border-color: rgba(192, 117, 244, 0.5);
+        box-shadow: 0 8px 24px rgba(192, 117, 244, 0.2);
+        transform: translateY(-2px);
+    }
+
+.activity-card-inner {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    padding: 30px;
+    align-items: flex-start;
+}
+
+.activity-card-image {
+    width: 300px;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    .activity-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+/* Activity Card Content */
+.activity-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.activity-card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.activity-card-meta {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.activity-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.activity-meta-icon {
+    font-size: 16px;
+}
+
+/* Details Grid */
+.activity-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.activity-detail {
+    display: flex;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.activity-detail-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 60px;
+}
+
+.activity-detail-value {
+    color: #fff;
+    flex: 1;
+}
+
+.activity-deadline-red {
+    color: #ff6a8a;
+    font-weight: 600;
+}
+
+/* Description */
+.activity-description {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    max-height: 100px;
+    overflow: hidden;
+}
+
+/* Action Button */
+.activity-card-action {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.activity-btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 300ms ease;
+}
+
+.activity-btn-signup {
+    background: linear-gradient(135deg, #C075F4 0%, #8A2BE2 100%);
+    color: #fff;
+}
+
+    .activity-btn-signup:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(192, 117, 244, 0.4);
+    }
+
+.activity-btn-full {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+}
+
+/* No Results */
+.activity-no-results {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 60px 20px;
+    font-size: 16px;
+}
+
+/* ========================================
+   MODAL STYLING
+   ======================================== */
+
+.activity-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+}
+
+.activity-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 16px;
+    z-index: 1000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.activity-modal-content {
+    padding: 30px;
+    position: relative;
+}
+
+.activity-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 200ms ease;
+    z-index: 10;
+}
+
+    .activity-modal-close:hover {
+        background: #e0e0e0;
+    }
+
+/* Modal Header */
+.activity-modal-header {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.activity-modal-image {
+    width: 250px;
+    height: 250px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+    .activity-modal-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.activity-modal-info h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f0b1a;
+    margin: 0 0 20px 0;
+}
+
+.activity-modal-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+    .activity-modal-meta div {
+        display: flex;
+        gap: 12px;
+    }
+
+.activity-modal-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 8px;
+}
+
+.modal-meta-label,
+.modal-detail-label {
+    font-weight: 600;
+    color: #666;
+    min-width: 60px;
+}
+
+.activity-modal-description {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #666;
+    margin-top: 16px;
+}
+
+/* Signup Form */
+.activity-signup-form {
+    padding-top: 30px;
+}
+
+.form-instruction {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.activity-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f0b1a;
+        margin-bottom: 8px;
+    }
+
+    .form-group input {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 200ms ease;
+    }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #C075F4;
+            box-shadow: 0 0 8px rgba(192, 117, 244, 0.2);
+        }
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+.form-btn {
+    padding: 12px 40px;
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 300ms ease;
+}
+
+.form-btn-cancel {
+    background: #ddd;
+    color: #666;
+}
+
+    .form-btn-cancel:hover {
+        background: #ccc;
+    }
+
+.form-btn-submit {
+    background: linear-gradient(135deg, #C075F4 0%, #8A2BE2 100%);
+    color: #fff;
+}
+
+    .form-btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(192, 117, 244, 0.4);
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activity-hero-title {
+        font-size: 2rem;
+    }
+
+    .activity-card-inner {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-card-image {
+        width: 100%;
+        height: 250px;
+    }
+
+    .activity-filters {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .activity-modal-header {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-modal-image {
+        width: 100%;
+        height: 250px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   ACTIVITY PAGE HEADER OVERRIDE
+   ======================================== */
+
+.kwycc-activity-page ~ header.kwycc-site-header,
+body.post-type-archive-activity .kwycc-site-header {
+    background: #000 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }

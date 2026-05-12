@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!defined('ABSPATH'))
     exit;
 ?><!doctype html>
@@ -10,15 +10,15 @@ if (!defined('ABSPATH'))
 </head>
 <body <?php body_class(); ?>>
 
-<!-- 自訂 header 開始 -->
+<!-- è‡ªè¨‚ header é–‹å§‹ -->
 <header class="kwycc-site-header">
   <div class="site-left">
     <?php
-    // 優先使用 Custom Logo（Customizer）
+    // å„ªå…ˆä½¿ç”¨ Custom Logoï¼ˆCustomizerï¼‰
     if (function_exists('the_custom_logo') && has_custom_logo()) {
         the_custom_logo();
     } else {
-        // 嘗試取得 Site Icon 的 attachment ID 與原始 full URL
+        // å˜—è©¦å–å¾— Site Icon çš„ attachment ID èˆ‡åŽŸå§‹ full URL
         $site_icon_full = '';
         $site_icon_id = get_option('site_icon');
         if ($site_icon_id) {
@@ -28,7 +28,7 @@ if (!defined('ABSPATH'))
             }
         }
 
-        // 若沒有 site icon 的原始檔，改用 get_site_icon_url()
+        // è‹¥æ²’æœ‰ site icon çš„åŽŸå§‹æª”ï¼Œæ”¹ç”¨ get_site_icon_url()
         if (empty($site_icon_full) && function_exists('get_site_icon_url')) {
             $maybe = get_site_icon_url();
             if ($maybe) {
@@ -36,7 +36,7 @@ if (!defined('ABSPATH'))
             }
         }
 
-        // 最後 fallback：主題內建 logo 檔案
+        // æœ€å¾Œ fallbackï¼šä¸»é¡Œå…§å»º logo æª”æ¡ˆ
         if (empty($site_icon_full)) {
             $site_icon_full = get_stylesheet_directory_uri() . '/assets/images/site-logo-original.png';
         }
@@ -50,16 +50,13 @@ if (!defined('ABSPATH'))
   <div class="site-right">
           <?php
           // Determine activities archive / registration landing URL
-          $activity_register_url = '#';
+          $activity_register_url = home_url('/activity/');  // Changed: Use /activity/ as primary fallback
+          
           if (function_exists('get_post_type_archive_link')) {
               $archive_link = get_post_type_archive_link('activity');
               if (!empty($archive_link)) {
                   $activity_register_url = $archive_link;
               }
-          }
-          // Fallback to a sensible path if archive not set
-          if ($activity_register_url === '#') {
-              $activity_register_url = home_url('/activities/');
           }
           ?>
     <!-- 報名活動 CTA (顯示於語言切換左側) -->
@@ -74,10 +71,10 @@ if (!defined('ABSPATH'))
     <div class="kwycc-lang-wrapper">
       <button id="kwycc-lang-toggle" class="kwycc-btn kwycc-lang" aria-expanded="false" aria-label="<?php esc_attr_e('Toggle language', 'revamppage'); ?>">
         <img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/images/globe.png'); ?>" alt="" class="btn-icon">
-        <span class="btn-text">繁</span>
+        <span class="btn-text">ç¹</span>
       </button>
       <nav id="kwycc-lang-menu" class="kwycc-dropdown-menu kwycc-lang-menu" aria-label="<?php esc_attr_e('Language selection', 'revamppage'); ?>">
-        <a href="#" data-lang="zh" class="lang-link">繁體中文</a>
+        <a href="#" data-lang="zh" class="lang-link">ç¹é«”ä¸­æ–‡</a>
         <a href="#" data-lang="en" class="lang-link">English</a>
       </nav>
     </div>
@@ -121,4 +118,4 @@ if (!defined('ABSPATH'))
     </div>
   </div>
 </header>
-<!-- 自訂 header 結束 -->
+<!-- è‡ªè¨‚ header çµæŸ -->

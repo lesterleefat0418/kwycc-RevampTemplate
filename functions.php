@@ -90,13 +90,19 @@ function revamppage_activity_meta_box_callback($post)
     $deadline = get_post_meta($post->ID, '_activity_deadline', true);
     $total_seats = get_post_meta($post->ID, '_activity_total_seats', true);
     $booked_seats = get_post_meta($post->ID, '_activity_booked_seats', true);
+    $registration_url = get_post_meta($post->ID, '_activity_registration_url', true);
+    $activity_code = get_post_meta($post->ID, '_activity_code', true);
+    $activity_location = get_post_meta($post->ID, '_activity_location', true);
+    $activity_time = get_post_meta($post->ID, '_activity_time', true);
+    $activity_short_desc = get_post_meta($post->ID, '_activity_short_desc', true);
+    $activity_popularity = get_post_meta($post->ID, '_activity_popularity', true);
     ?>
 
     <div style="padding: 10px 0;">
         <label for="activity_registration_url" style="display: block; font-weight: bold; margin-bottom: 5px;">
             <?php esc_html_e('Registration/Details Page URL', 'revamppage'); ?>
         </label>
-        <input type="url" id="activity_registration_url" name="activity_registration_url" value="<?php echo esc_attr(get_post_meta($post->ID, '_activity_registration_url', true)); ?>" style="width: 100%; padding: 8px;">
+        <input type="url" id="activity_registration_url" name="activity_registration_url" value="<?php echo esc_attr($registration_url); ?>" style="width: 100%; padding: 8px;">
         <small style="color: #666; margin-top: 5px; display: block;">Leave empty to use the activity page itself</small>
     </div>
     
@@ -121,6 +127,41 @@ function revamppage_activity_meta_box_callback($post)
         <input type="number" id="activity_booked_seats" name="activity_booked_seats" value="<?php echo esc_attr($booked_seats); ?>" min="0" style="width: 100%; padding: 8px;">
     </div>
 
+    <div style="padding: 10px 0;">
+        <label for="activity_code" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Activity Code', 'revamppage'); ?>
+        </label>
+        <input type="text" id="activity_code" name="activity_code" value="<?php echo esc_attr($activity_code); ?>" style="width: 100%; padding: 8px;">
+    </div>
+
+    <div style="padding: 10px 0;">
+        <label for="activity_location" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Activity Location', 'revamppage'); ?>
+        </label>
+        <input type="text" id="activity_location" name="activity_location" value="<?php echo esc_attr($activity_location); ?>" style="width: 100%; padding: 8px;">
+    </div>
+
+    <div style="padding: 10px 0;">
+        <label for="activity_time" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Activity Time', 'revamppage'); ?>
+        </label>
+        <input type="text" id="activity_time" name="activity_time" value="<?php echo esc_attr($activity_time); ?>" placeholder="e.g., 02:00PM - 05:30PM" style="width: 100%; padding: 8px;">
+    </div>
+
+    <div style="padding: 10px 0;">
+        <label for="activity_short_desc" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Short Description', 'revamppage'); ?>
+        </label>
+        <textarea id="activity_short_desc" name="activity_short_desc" style="width: 100%; padding: 8px; min-height: 100px;"><?php echo esc_textarea($activity_short_desc); ?></textarea>
+    </div>
+
+    <div style="padding: 10px 0;">
+        <label for="activity_popularity" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Popularity Score (for sorting)', 'revamppage'); ?>
+        </label>
+        <input type="number" id="activity_popularity" name="activity_popularity" value="<?php echo esc_attr($activity_popularity); ?>" min="0" style="width: 100%; padding: 8px;">
+    </div>
+
     <?php
 }
 
@@ -141,6 +182,7 @@ function revamppage_save_activity_meta($post_id)
         return;
     }
 
+    // Save all meta fields
     if (isset($_POST['activity_deadline'])) {
         update_post_meta($post_id, '_activity_deadline', sanitize_text_field($_POST['activity_deadline']));
     }
@@ -151,6 +193,30 @@ function revamppage_save_activity_meta($post_id)
 
     if (isset($_POST['activity_booked_seats'])) {
         update_post_meta($post_id, '_activity_booked_seats', intval($_POST['activity_booked_seats']));
+    }
+
+    if (isset($_POST['activity_registration_url'])) {
+        update_post_meta($post_id, '_activity_registration_url', esc_url_raw($_POST['activity_registration_url']));
+    }
+
+    if (isset($_POST['activity_code'])) {
+        update_post_meta($post_id, '_activity_code', sanitize_text_field($_POST['activity_code']));
+    }
+
+    if (isset($_POST['activity_location'])) {
+        update_post_meta($post_id, '_activity_location', sanitize_text_field($_POST['activity_location']));
+    }
+
+    if (isset($_POST['activity_time'])) {
+        update_post_meta($post_id, '_activity_time', sanitize_text_field($_POST['activity_time']));
+    }
+
+    if (isset($_POST['activity_short_desc'])) {
+        update_post_meta($post_id, '_activity_short_desc', wp_kses_post($_POST['activity_short_desc']));
+    }
+
+    if (isset($_POST['activity_popularity'])) {
+        update_post_meta($post_id, '_activity_popularity', intval($_POST['activity_popularity']));
     }
 }
 add_action('save_post', 'revamppage_save_activity_meta');
@@ -204,3 +270,110 @@ function revamppage_enqueue()
     );
 }
 add_action('wp_enqueue_scripts', 'revamppage_enqueue');
+
+/**
+ * Enqueue activity page scripts and styles
+ */
+function revamppage_enqueue_activity_scripts()
+{
+    if (is_post_type_archive('activity') || is_singular('activity')) {
+        wp_enqueue_script(
+            'revamppage-activity',
+            get_stylesheet_directory_uri() . '/js/kwycc-activity.js',
+            array(),
+            '1.0',
+            true
+        );
+
+        // Localize script for AJAX
+        wp_localize_script('revamppage-activity', 'revamppage_vars', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('activity_signup_nonce')
+        ));
+    }
+}
+add_action('wp_enqueue_scripts', 'revamppage_enqueue_activity_scripts');
+
+/**
+ * Handle activity signup form submission via AJAX
+ */
+function revamppage_handle_activity_signup()
+{
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'activity_signup_nonce')) {
+        wp_send_json_error(array('message' => 'Security check failed'));
+        wp_die();
+    }
+
+    // Get post ID
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+
+    if (!$post_id || get_post_type($post_id) !== 'activity') {
+        wp_send_json_error(array('message' => 'Invalid activity'));
+        wp_die();
+    }
+
+    // Sanitize form data
+    $signup_data = array(
+        'post_id' => $post_id,
+        'chinese_name' => sanitize_text_field($_POST['chinese_name'] ?? ''),
+        'english_name' => sanitize_text_field($_POST['english_name'] ?? ''),
+        'phone' => sanitize_text_field($_POST['phone'] ?? ''),
+        'id_number' => sanitize_text_field($_POST['id_number'] ?? ''),
+        'category' => sanitize_text_field($_POST['category'] ?? ''),
+        'category_confirm' => sanitize_text_field($_POST['category_confirm'] ?? ''),
+        'signup_date' => current_time('mysql')
+    );
+
+    // Validate required fields
+    if (empty($signup_data['chinese_name']) || empty($signup_data['phone']) || empty($signup_data['id_number'])) {
+        wp_send_json_error(array('message' => 'Please fill in all required fields'));
+        wp_die();
+    }
+
+    // Update booked seats count
+    $booked_seats = (int) get_post_meta($post_id, '_activity_booked_seats', true);
+    $total_seats = (int) get_post_meta($post_id, '_activity_total_seats', true);
+
+    if ($booked_seats >= $total_seats) {
+        wp_send_json_error(array('message' => 'Activity is fully booked'));
+        wp_die();
+    }
+
+    // Increment booked seats
+    update_post_meta($post_id, '_activity_booked_seats', $booked_seats + 1);
+
+    // Save signup data (you can expand this to store in a custom table or email)
+    // For now, we'll just return success
+    do_action('revamppage_activity_signup', $signup_data);
+
+    wp_send_json_success(array(
+        'message' => 'Sign up successful',
+        'activity_id' => $post_id
+    ));
+    wp_die();
+}
+add_action('wp_ajax_submit_activity_signup', 'revamppage_handle_activity_signup');
+add_action('wp_ajax_nopriv_submit_activity_signup', 'revamppage_handle_activity_signup');
+
+/**
+ * Hook for custom activity signup handling (can be extended by child theme)
+ */
+function revamppage_activity_signup_email($signup_data)
+{
+    // You can extend this to send email notifications
+    // Example: wp_mail($admin_email, 'New Activity Signup', $message);
+}
+add_action('revamppage_activity_signup', 'revamppage_activity_signup_email');
+
+/**
+ * Add body class for activity archive pages
+ */
+function revamppage_body_classes($classes)
+{
+    if (is_post_type_archive('activity')) {
+        $classes[] = 'is-activity-page';
+    }
+    return $classes;
+}
+add_filter('body_class', 'revamppage_body_classes');
