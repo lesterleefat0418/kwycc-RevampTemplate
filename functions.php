@@ -8,16 +8,10 @@ if (!defined('ABSPATH')) {
  */
 function revamppage_setup()
 {
-    // Allow WP Customizer background image/color
     add_theme_support('custom-background');
-
-    // Allow custom logo
     add_theme_support('custom-logo');
+    add_theme_support('post-thumbnails', array('activity', 'page', 'post'));
 
-    // Add featured image support
-    add_theme_support('post-thumbnails', array('activity'));
-
-    // Register navigation menus for different languages
     register_nav_menus(array(
         'primary-menu-zh' => esc_html__('Primary Menu - Chinese', 'revamppage'),
         'primary-menu-en' => esc_html__('Primary Menu - English', 'revamppage'),
@@ -227,10 +221,12 @@ add_action('save_post', 'revamppage_save_activity_meta');
 function revamppage_menu_fallback()
 {
     echo '<ul class="kwycc-menu-list">';
+
     wp_list_pages(array(
         'title_li' => '',
         'depth' => 2,
     ));
+
     echo '</ul>';
 }
 
@@ -239,10 +235,40 @@ function revamppage_menu_fallback()
  */
 function revamppage_enqueue()
 {
-    // Main stylesheet
     wp_enqueue_style('revamppage-style', get_stylesheet_uri());
 
-    // Hero behaviour (center detection + active scaling)
+    if (is_page_template('page-past-activities.php')) {
+        wp_enqueue_style(
+            'revamppage-past-activities',
+            get_stylesheet_directory_uri() . '/css/past-activities.css',
+            array('revamppage-style'),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'revamppage-past-activities',
+            get_stylesheet_directory_uri() . '/js/past-activities.js',
+            array(),
+            '1.0',
+            true
+        );
+    }
+
+    wp_enqueue_style(
+        'revamppage-other-information',
+        get_stylesheet_directory_uri() . '/css/other-information.css',
+        array('revamppage-style'),
+        '1.0'
+    );
+
+    wp_enqueue_script(
+        'revamppage-other-information',
+        get_stylesheet_directory_uri() . '/js/other-information.js',
+        array(),
+        '1.0',
+        true
+    );
+
     wp_enqueue_script(
         'revamppage-hero',
         get_stylesheet_directory_uri() . '/js/kwycc-hero.js',
@@ -251,19 +277,9 @@ function revamppage_enqueue()
         true
     );
 
-    // Navigation & language toggle functionality
     wp_enqueue_script(
         'revamppage-nav',
         get_stylesheet_directory_uri() . '/js/kwycc-nav.js',
-        array(),
-        '1.0',
-        true
-    );
-
-    // Footer functionality
-    wp_enqueue_script(
-        'revamppage-footer',
-        get_stylesheet_directory_uri() . '/js/kwycc-footer.js',
         array(),
         '1.0',
         true
@@ -377,3 +393,299 @@ function revamppage_body_classes($classes)
     return $classes;
 }
 add_filter('body_class', 'revamppage_body_classes');
+
+/**
+ * ----------------------
+ * Contact page: enqueue CSS when using contact.php template
+ * ----------------------
+ */
+function revamppage_enqueue_contact_assets()
+{
+    // Ensure conditional check only runs during front-end rendering
+    if (is_page() && is_page_template('contact.php')) {
+        wp_enqueue_style('revamppage-contact', get_stylesheet_directory_uri() . '/css/contact.css', array('revamppage-style'), '1.0');
+    }
+}
+add_action('wp_enqueue_scripts', 'revamppage_enqueue_contact_assets');
+
+/**
+ * Handle contact form submission (admin-post)
+ */
+function revamppage_handle_contact_form()
+{
+    // Verify nonce
+    if (!isset($_POST['revamppage_contact_nonce']) || !wp_verify_nonce($_POST['revamppage_contact_nonce'], 'revamppage_contact_nonce')) {
+        $redirect = wp_get_referer() ? wp_get_referer() : home_url();
+        wp_safe_redirect(add_query_arg('contact', 'error', $redirect));
+        exit;
+    }
+
+    $name = sanitize_text_field($_POST['contact_name'] ?? '');
+    $email = sanitize_email($_POST['contact_email'] ?? '');
+    $subject = sanitize_text_field($_POST['contact_subject'] ?? __('Contact Form Message', 'revamppage'));
+    $message = sanitize_textarea_field($_POST['contact_message'] ?? '');
+
+    if (empty($name) || empty($email) || empty($message) || !is_email($email)) {
+        $redirect = wp_get_referer() ? wp_get_referer() : home_url();
+        wp_safe_redirect(add_query_arg('contact', 'error', $redirect));
+        exit;
+    }
+
+    $to = get_option('admin_email');
+    $headers = array('Reply-To: ' . $name . ' <' . $email . '>');
+    $body = "Name: {$name}\nEmail: {$email}\n\nMessage:\n{$message}";
+
+    // Attempt to send email
+    $sent = wp_mail($to, $subject, $body, $headers);
+
+    $redirect = wp_get_referer() ? wp_get_referer() : home_url();
+    if ($sent) {
+        wp_safe_redirect(add_query_arg('contact', 'success', $redirect));
+    } else {
+        wp_safe_redirect(add_query_arg('contact', 'error', $redirect));
+    }
+    exit;
+}
+add_action('admin_post_nopriv_revamppage_contact', 'revamppage_handle_contact_form');
+add_action('admin_post_revamppage_contact', 'revamppage_handle_contact_form');
+
+/**
+ * Enqueue About page CSS only when the About page is displayed.
+ * More robust: checks page template meta, slug or page ID.
+ */
+function revamppage_enqueue_about_assets()
+{
+    if (!is_page()) {
+        return;
+    }
+
+    global $post;
+    if (!$post instanceof WP_Post) {
+        return;
+    }
+
+    // 1) Template assigned in Page Attributes (meta stored in _wp_page_template)
+    $template = get_post_meta($post->ID, '_wp_page_template', true);
+
+    // 2) Page slug and ID checks as fallback
+    $slug = $post->post_name;
+    $page_id = (int) $post->ID;
+
+    // Add your About page ID here if you want an exact match, e.g. 42
+    $about_page_ids = array(); // e.g. array(42);
+
+    if (
+        $template === 'page-about-us.php'
+        || $slug === 'about-us'
+        || $slug === 'about'
+        || in_array($page_id, $about_page_ids, true)
+    ) {
+        wp_enqueue_style(
+            'revamppage-about',
+            get_stylesheet_directory_uri() . '/css/about.css',
+            array('revamppage-style'),
+            '1.0'
+        );
+
+        // Enqueue the about page lightbox script
+        wp_enqueue_script(
+            'revamppage-about-lightbox',
+            get_stylesheet_directory_uri() . '/js/about-lightbox.js',
+            array(),
+            '1.0',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'revamppage_enqueue_about_assets');
+
+function revamppage_get_activity_image_html($post_id, $size = 'medium')
+{
+    $post_id = absint($post_id);
+    $alt = get_the_title($post_id);
+    $alt = $alt ? $alt : __('Post image', 'revamppage');
+
+    // 1) Featured image
+    if (has_post_thumbnail($post_id)) {
+        return get_the_post_thumbnail($post_id, $size, array(
+            'alt' => $alt,
+            'loading' => 'lazy',
+            'class' => 'revamppage-activity-image',
+        ));
+    }
+
+    // 2) Attached images
+    $attachments = get_attached_media('image', $post_id);
+    if (!empty($attachments)) {
+        $first_attachment = reset($attachments);
+        return wp_get_attachment_image($first_attachment->ID, $size, false, array(
+            'alt' => $alt,
+            'loading' => 'lazy',
+            'class' => 'revamppage-activity-image',
+        ));
+    }
+
+    // 3) Try to find images from post content (src / data-src / srcset)
+    $content = get_post_field('post_content', $post_id, 'raw');
+    if (!empty($content)) {
+        $image_url = '';
+
+        preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $matches);
+        if (!empty($matches[1])) {
+            $image_url = $matches[1];
+        }
+
+        if (empty($image_url)) {
+            preg_match('/<img[^>]+data-src=["\']([^"\']+)["\']/i', $content, $data_matches);
+            if (!empty($data_matches[1])) {
+                $image_url = $data_matches[1];
+            }
+        }
+
+        if (empty($image_url)) {
+            preg_match('/<img[^>]+srcset=["\']([^"\']+)["\']/i', $content, $srcset_matches);
+            if (!empty($srcset_matches[1])) {
+                $srcset = $srcset_matches[1];
+                $srcset_parts = preg_split('/\s*,\s*/', $srcset);
+                if (!empty($srcset_parts[0])) {
+                    $image_url = trim($srcset_parts[0]);
+                    $image_url = preg_replace('/\s+\d+w$/i', '', $image_url);
+                    $image_url = preg_replace('/\s+\d+h$/i', '', $image_url);
+                }
+            }
+        }
+
+        if (!empty($image_url)) {
+            return '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '" loading="lazy" class="revamppage-activity-image">';
+        }
+
+        // 4) Gallery shortcode fallback
+        if (has_shortcode($content, 'gallery')) {
+            $gallery_images = get_post_gallery_images($post_id);
+            if (!empty($gallery_images[0])) {
+                return '<img src="' . esc_url($gallery_images[0]) . '" alt="' . esc_attr($alt) . '" loading="lazy" class="revamppage-activity-image">';
+            }
+        }
+    }
+
+    // 5) Placeholder
+    $placeholder_path = get_stylesheet_directory() . '/images/placeholder-about.png';
+    $placeholder_url = get_stylesheet_directory_uri() . '/images/placeholder-about.png';
+
+    if (!file_exists($placeholder_path)) {
+        $placeholder_path = get_stylesheet_directory() . '/images/placeholder.png';
+        $placeholder_url = get_stylesheet_directory_uri() . '/images/placeholder.png';
+    }
+
+    return '<img src="' . esc_url($placeholder_url) . '" alt="' . esc_attr($alt) . '" loading="lazy" class="revamppage-activity-image">';
+}
+
+function revamppage_enqueue_past_activities_assets()
+{
+    if (is_page_template('page-past-activities.php')) {
+        wp_enqueue_style(
+            'revamppage-past-activities',
+            get_stylesheet_directory_uri() . '/css/past-activities.css',
+            array('revamppage-style'),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'revamppage-past-activities',
+            get_stylesheet_directory_uri() . '/js/past-activities.js',
+            array(),
+            '1.0',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'revamppage_enqueue_past_activities_assets');
+
+
+// Enqueue gallery CSS + helper JS for single posts that should use the gallery layout
+function revamppage_enqueue_single_gallery_assets()
+{
+    if (!is_singular()) {
+        return;
+    }
+
+    $post_id = get_queried_object_id();
+    if (!$post_id) {
+        return;
+    }
+
+    // 1) Featured image
+    $has_thumbnail = has_post_thumbnail($post_id);
+
+    // 2) Attached images (uploaded and attached to this post)
+    $attached = get_posts(array(
+        'post_type' => 'attachment',
+        'post_mime_type' => 'image',
+        'posts_per_page' => 1,
+        'post_parent' => $post_id,
+        'fields' => 'ids',
+    ));
+    $has_attached = !empty($attached);
+
+    // 3) Gallery shortcode images
+    $gallery_images = get_post_gallery_images($post_id);
+    $has_gallery_images = !empty($gallery_images);
+
+    // 4) Inline <img> in raw content
+    $content = get_post_field('post_content', $post_id, 'raw');
+    $has_inline_imgs = $content && preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $content);
+
+    // 5) Gutenberg blocks: core/gallery or core/image (covers block editor usage)
+    $has_block_images = false;
+    if (function_exists('parse_blocks') && !empty($content)) {
+        $blocks = parse_blocks($content);
+        $check_blocks = function ($blocks) use (&$check_blocks) {
+            foreach ($blocks as $b) {
+                if (empty($b['blockName'])) {
+                    if (!empty($b['innerBlocks']) && $check_blocks($b['innerBlocks'])) {
+                        return true;
+                    }
+                    continue;
+                }
+                if (in_array($b['blockName'], array('core/gallery', 'core/image'), true)) {
+                    return true;
+                }
+                if (!empty($b['innerBlocks']) && $check_blocks($b['innerBlocks'])) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        $has_block_images = $check_blocks($blocks);
+    }
+
+    // Final decision
+    $should_enqueue = $has_thumbnail || $has_attached || $has_gallery_images || $has_inline_imgs || $has_block_images;
+
+    // Debug comment (remove in production)
+    echo '<!-- gallery-detect: post=' . (int) $post_id
+        . ' thumb=' . (int) $has_thumbnail
+        . ' attached=' . (int) $has_attached
+        . ' gallery_shortcut=' . (int) $has_gallery_images
+        . ' inline_img=' . (int) $has_inline_imgs
+        . ' block_img=' . (int) $has_block_images
+        . ' -->' . PHP_EOL;
+
+    if ($should_enqueue) {
+        wp_enqueue_style(
+            'revamppage-single-activity',
+            get_stylesheet_directory_uri() . '/css/single-activity-gallery.css',
+            array('revamppage-style'),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'revamppage-single-activity',
+            get_stylesheet_directory_uri() . '/js/single-activity.js',
+            array(),
+            '1.0',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'revamppage_enqueue_single_gallery_assets', 20);

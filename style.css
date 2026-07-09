@@ -30,7 +30,7 @@ h3 {
     margin-bottom: 15px;
 }
     h3 .part1 {
-        color: #C075F4; /* 紫色 */
+        color: #85E0FF;
     }
 
     h3 .part2 {
@@ -49,7 +49,7 @@ h2 {
 }
 
     h2 .part1 {
-        color: #C075F4; /* 紫色 */
+        color: #FFEC4A;
     }
 
     h2 .part2 {
@@ -134,7 +134,7 @@ body:not(.custom-background) {
         color: #fff;
     }
     .kwycc-btn .btn-text {
-        font-size: calc(min(2.5vh, 2.5vw));
+        font-size: calc(min(1.3rem, 1.3rem));
         font-weight: 500;
         white-space: nowrap;
     }
@@ -777,12 +777,12 @@ body:not(.custom-background) {
     text-align: center;
     color: #fff;
     margin: 0 0 40px 0;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 600;
 }
 
     .video-title .part1 {
-        color: #C075F4;
+        color: #FFEC4A;
         font-weight: 700;
     }
 
@@ -794,8 +794,8 @@ body:not(.custom-background) {
 /* Main video content layout */
 .video-content {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 50px;
+    grid-template-columns: 1.95fr 1.5fr;
+    gap: 35px;
     align-items: center;
 }
 
@@ -849,7 +849,7 @@ body:not(.custom-background) {
 }
 
 .video-description {
-    font-size: calc(min(2.5vh, 2.5vw));
+    font-size: calc(min(2.3vh, 2.3vw));
     color: rgba(255, 255, 255, 1);
     line-height: 1.6;
     margin: 0 0 24px 0;
@@ -996,7 +996,7 @@ body:not(.custom-background) {
 
 .know-content {
     display: grid;
-    grid-template-columns: 1.5fr 1.4fr;
+    grid-template-columns: 1.5fr 1.2fr;
     gap: 10px;
     align-items: center;
     margin-left: calc(-50vw + 50%);
@@ -1007,18 +1007,18 @@ body:not(.custom-background) {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-left: 15%;
+    margin:10% 0 10% 15%;
+    font-size: calc(min(2vh, 2vw));
 }
 
 .know-desc {
-    font-size: calc(min(2.5vh, 2.5vw));
     line-height: 1.8;
     color: rgba(255, 255, 255, 0.9);
     margin: 0;
 }
 
 .know-image {
-    width: 70%;
+    width: 80%;
     padding:5%
 }
 
@@ -1083,7 +1083,7 @@ body:not(.custom-background) {
 
 .smarteen-content {
     display: grid;
-    grid-template-columns: 1.35fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
     align-items: center;
 }
@@ -1102,6 +1102,7 @@ body:not(.custom-background) {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    width: 90%;
 }
 
 .smarteen-card {
@@ -1352,18 +1353,19 @@ body:not(.custom-background) {
 
 .container {
     max-width: 90%;
-    margin: 0 auto;
+    margin: 2.5% auto;
 }
 
 .section-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     text-align: center;
     color: #fff;
+    padding: 0% 0% 2% 0%;
 }
 
     .section-title .part1 {
-        color: #C075F4;
+        color: #FFEC4A;
         font-weight: 700;
     }
 

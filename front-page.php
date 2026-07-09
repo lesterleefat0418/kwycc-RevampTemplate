@@ -3,12 +3,172 @@
 get_header();
 ?>
 
-<div class="kwycc-hero">
-   <h3>
-      <span class="part1">暑期熱門</span><span class="part2">活動</span>
-   </h3>
-
 <?php
+// Helper to find a post/page by slug across common types
+if (!function_exists('revamppage_get_post_by_slug')) {
+    function revamppage_get_post_by_slug($slug)
+    {
+        if (!$slug)
+            return null;
+        // try page first, then post
+        $p = get_page_by_path($slug, OBJECT, 'page');
+        if ($p)
+            return $p;
+        return get_page_by_path($slug, OBJECT, 'post');
+    }
+}
+
+// DOM helpers: extract inner HTML of element by class, or attribute of child element
+if (!function_exists('revamppage_extract_inner_html_by_class')) {
+    function revamppage_extract_inner_html_by_class($html, $className)
+    {
+        if (empty($html) || empty($className)) {
+            return '';
+        }
+
+        libxml_use_internal_errors(true);
+        $doc = new DOMDocument();
+        $wrapped = '<!doctype html><html><body>' . $html . '</body></html>';
+        $loaded = $doc->loadHTML(mb_convert_encoding($wrapped, 'HTML-ENTITIES', 'UTF-8'));
+        if (!$loaded) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $xpath = new DOMXPath($doc);
+        $nodes = $xpath->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' " . $className . " ')]");
+        if ($nodes->length === 0) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $node = $nodes->item(0);
+        $inner = '';
+        foreach ($node->childNodes as $child) {
+            $inner .= $doc->saveHTML($child);
+        }
+
+        libxml_clear_errors();
+        return $inner;
+    }
+}
+
+if (!function_exists('revamppage_extract_child_inner_html')) {
+    // find element with className, then find first child tagName (optional) and return innerHTML
+    function revamppage_extract_child_inner_html($html, $className, $childTag = null)
+    {
+        if (empty($html) || empty($className)) {
+            return '';
+        }
+
+        libxml_use_internal_errors(true);
+        $doc = new DOMDocument();
+        $wrapped = '<!doctype html><html><body>' . $html . '</body></html>';
+        $loaded = $doc->loadHTML(mb_convert_encoding($wrapped, 'HTML-ENTITIES', 'UTF-8'));
+        if (!$loaded) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $xpath = new DOMXPath($doc);
+        $nodes = $xpath->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' " . $className . " ')]");
+        if ($nodes->length === 0) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $root = $nodes->item(0);
+
+        if ($childTag) {
+            $childNodes = $xpath->query(".//" . $childTag, $root);
+            if ($childNodes->length === 0) {
+                libxml_clear_errors();
+                return '';
+            }
+            $target = $childNodes->item(0);
+        } else {
+            $target = $root;
+        }
+
+        $inner = '';
+        foreach ($target->childNodes as $child) {
+            $inner .= $doc->saveHTML($child);
+        }
+
+        libxml_clear_errors();
+        return $inner;
+    }
+}
+
+if (!function_exists('revamppage_extract_child_attribute')) {
+    // find element with className, then find first child tagName and return attribute value
+    function revamppage_extract_child_attribute($html, $className, $childTag, $attrName)
+    {
+        if (empty($html) || empty($className) || empty($childTag) || empty($attrName)) {
+            return '';
+        }
+
+        libxml_use_internal_errors(true);
+        $doc = new DOMDocument();
+        $wrapped = '<!doctype html><html><body>' . $html . '</body></html>';
+        $loaded = $doc->loadHTML(mb_convert_encoding($wrapped, 'HTML-ENTITIES', 'UTF-8'));
+        if (!$loaded) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $xpath = new DOMXPath($doc);
+        $nodes = $xpath->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' " . $className . " ')]");
+        if ($nodes->length === 0) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $root = $nodes->item(0);
+        $childNodes = $xpath->query(".//" . $childTag, $root);
+        if ($childNodes->length === 0) {
+            libxml_clear_errors();
+            return '';
+        }
+
+        $value = $childNodes->item(0)->getAttribute($attrName);
+        libxml_clear_errors();
+        return $value;
+    }
+}
+
+// current (Chinese) front page post
+$post = get_queried_object(); // this template is used for the front page -> queried object is the front page
+// prepare raw post content (unfiltered) so we can parse markup reliably
+$raw = $post && !empty($post->post_content) ? $post->post_content : '';
+//Extract summar title from the Chinese post
+$summary_title_html = revamppage_extract_inner_html_by_class($raw, 'kwycc-hero');
+
+// Extract video pieces from the Chinese post
+$video_title_html = revamppage_extract_child_inner_html($raw, 'video-title', 'span');
+$iframe_src = revamppage_extract_child_attribute($raw, 'kwycc-video', 'iframe', 'src');
+$video_heading_html = revamppage_extract_child_inner_html($raw, 'video-heading'); // inner of h2/h3.video-title
+$video_description_html = revamppage_extract_child_inner_html($raw, 'video-description');
+
+// Extract know-section pieces
+$know_title_html = revamppage_extract_child_inner_html($raw, 'section-title');
+$know_text_html = revamppage_extract_child_inner_html($raw, 'know-text');
+$know_image_html = revamppage_extract_child_attribute($raw, 'know-image', 'img', 'src');
+
+// Extract smarteen section pieces
+$smarteen_title_html = revamppage_extract_child_inner_html($raw, 'kwycc-smarteen');
+$smarteen_image_html = revamppage_extract_child_attribute($raw, 'smarteen-image', 'img', 'src');
+
+$smarteen_inner_title_html = revamppage_extract_inner_html_by_class($raw, 'smarteen-title');
+$smarteen_inner_info_html = revamppage_extract_inner_html_by_class($raw, 'smarteen-info-desc');
+
+// Prepare safe full-content fallbacks if needed
+$html = $post && !empty($post->post_content) ? apply_filters('the_content', $post->post_content) : '';
+?>
+
+<div class="kwycc-hero">
+<?php
+    echo $summary_title_html;
 // Query for activity posts
 $args = array(
     'post_type' => 'activity',
@@ -123,7 +283,9 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
   <div class="kwycc-video" id="kwycc-video">
     <div class="container">
       <h2 class="video-title">
-        <span class="part1">精彩</span><span class="part2">影片回顧</span>
+        <?php
+        echo $video_title_html;
+        ?>
       </h2>
       
       <div class="video-content">
@@ -133,14 +295,23 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                     background-position: center;
                     background-size: cover;">
           <div class="video-wrap">
-            <iframe src="https://www.youtube.com/embed/UjiO08ywIU4?si=-yMu-aXSe0YhC0J-" title="活動影片" frameborder="0" allowfullscreen></iframe>
+             <?php
+             $iframe_src = esc_url($iframe_src);
+             ?>
+             <iframe src="<?php echo $iframe_src; ?>" title="活動影片" frameborder="0" allowfullscreen></iframe>
           </div>
         </div>
 
         <div class="video-info">
-          <h3 class="video-heading">NBA 球星<br>Jimmy Butler 訪港活動</h3>
+          <h3 class="video-heading">
+            <?php
+            echo $video_heading_html;
+            ?>
+          </h3>
           <p class="video-description">
-            NBA球星Jimmy Butler於2024年8月20日至21日再次到訪香港，與本地球迷面面。這次香港行程提他繼去年暑假後，再次訪港，與球迷互動見面及創造更多可能，掀起全城籃球熱潮。
+            <?php
+            echo $video_description_html;
+            ?>
           </p>
           <a href="#" class="video-link" aria-label="查看更多">
             <img src="<?php echo get_stylesheet_directory_uri(); ?>/images/caretRight.png" alt="查看更多">
@@ -154,7 +325,9 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
   <section class="kwycc-know-section">
     <div class="container">
       <h2 class="section-title">
-        <span class="part1">會所架構</span><span class="part2">知多點</span>
+        <?php
+        echo $know_title_html;
+        ?>
       </h2>
 
       <div class="know-content"
@@ -163,12 +336,15 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                     background-position: center;
                     background-size: cover;">
         <div class="know-text">
-          <p class="know-desc">西九龍護青委員會 現有二十八名會長及七名永遠名譽會長，均為熱心公益的社會賢達。除了會長外，委員會內亦有十多名當然委員，他們均為積極參與社區事務的專業人士，就區內的青少年問題向委員會提供意見並協助制定有關青少年活動的策略。</p>
-          <p class="know-desc">當然委員包括三名區滅罪委員會主席 [ 油尖旺、九龍城及深水埗區 ] 、三名區校長會主席 [ 油尖旺、九龍城及深水埗區 ] ，以及九名分別來自不同政府或非政府部門的委員，包括警務處、社會福利署及四個非政府組織 [ 香港青年協會 
-(九龍城)、 香港小童群益會 (深水埗)、香港遊樂場協會  (旺角) 及香港中華基督教青年會 (油尖) ]。</p>
+            <?php
+            echo $know_text_html;
+            ?>
         </div>
         <div class="know-image">
-          <img src="<?php echo get_stylesheet_directory_uri(); ?>/images/know_org_chart.png" alt="會所架構組織圖">
+          <img src="
+          <?php
+            echo $know_image_html;
+          ?>">
         </div>
       </div>
     </div>
@@ -178,12 +354,17 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
   <section class="kwycc-smarteen-section">
     <div class="container">
       <h2 class="section-title">
-        <span class="part1">Smarteen</span><span class="part2">必學小知識</span>
+          <?php
+            echo $smarteen_title_html;
+          ?>
       </h2>
 
       <div class="smarteen-content">
         <div class="smarteen-image">
-          <img src="<?php echo get_stylesheet_directory_uri(); ?>/images/smarteen-character.png" alt="Smarteen 角色">
+          <img src="
+          <?php
+          echo $smarteen_image_html;
+          ?>">
         </div>
         <div class="smarteen-info">
           <div class="smarteen-card"
@@ -191,14 +372,16 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                 background-repeat: no-repeat;
                 background-position: center;
                 background-size: cover;">
-            <h3 class="smarteen-title">依托咪酯</h3>
-            <p class="smarteen-desc">
-              吸食依托咪酯的後果非常嚴重，例如吸食者會全身抽搐、神志不清、皮膚潰爛、身體不受控等類似「喪屍」的狀態，令吸食者的醜態盡露，尊嚴掃地，成為人生中難以磨滅的污點。
-             </p>
-            <p class="smarteen-desc">
-              而警方增設的打擊依托咪酯24小時舉報熱線（號碼：6629 2966）亦已投入運作，以與市民一起合作打擊依托咪酯相關罪行。           
-              另外，市民亦可透過即時通訊程式WhatsApp（號碼：6629 2966）或微信（帳戶：eto-report）作出舉報。
-            </p>
+            <h3 class="smarteen-title">          
+                <?php
+                    echo $smarteen_inner_title_html;
+                ?>
+            </h3>
+            <div>                
+                <?php
+                    echo $smarteen_inner_info_html;
+                ?>
+              </div>
           </div>
         </div>
       </div>
@@ -244,13 +427,45 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
               }
           }
 
-          // Helper to get url by title (falls back to '#')
-          function revamppage_menu_url($map, $title)
-          {
-              if (!empty($map[$title])) {
-                  return esc_url($map[$title]);
+          // Helper to get url by title (menu -> slug -> exact-title via WP_Query)
+          if (!function_exists('revamppage_menu_url')) {
+              function revamppage_menu_url($map, $title)
+              {
+                  // 1) Exact menu item match
+                  if (!empty($map[$title])) {
+                      return esc_url($map[$title]);
+                  }
+
+                  // 2) Try common slug variants first (fast, non-deprecated)
+                  $possible_slugs = array('contact', 'contact-us', '架構及宗旨', 'structure', 'about', 'about-structure');
+                  foreach ($possible_slugs as $slug) {
+                      $p = get_page_by_path($slug, OBJECT, 'page');
+                      if ($p && !empty($p->ID)) {
+                          return get_permalink($p->ID);
+                      }
+                  }
+
+                  // 3) Search pages by title using WP_Query and match exact title (case-insensitive)
+                  $q = new WP_Query(array(
+                      'post_type'      => 'page',
+                      'post_status'    => 'publish',
+                      's'              => $title,
+                      'posts_per_page' => 6,
+                      'no_found_rows'  => true,
+                  ));
+                  if ($q->have_posts()) {
+                      foreach ($q->posts as $p) {
+                          if (mb_strtolower(trim($p->post_title)) === mb_strtolower(trim($title))) {
+                              wp_reset_postdata();
+                              return get_permalink($p->ID);
+                          }
+                      }
+                      wp_reset_postdata();
+                  }
+
+                  // 4) final fallback
+                  return '#';
               }
-              return '#';
           }
           ?>
 

@@ -1,0 +1,410 @@
+:root {
+    --bg-top: #2a0b5a;
+    --bg-mid: #2b135f;
+    --bg-bottom: #081144;
+    --accent: #ff7a1a;
+    /*--muted-white: rgba(255,255,255,0.9);
+    --panel-bg: rgba(255,255,255,0.04);
+    --glass: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));*/
+}
+
+/* Page scope */
+.revamppage-about {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+    /* central container */
+    .revamppage-about.container {
+        max-width: 100%;
+        margin: 0 auto;
+       /*box-sizing: border-box;*/
+    }
+
+/* Title banner (angled orange ribbon) */
+.section-title {
+    position: relative;
+    margin: 60px 0 0px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    text-align: center;
+    background-image: url("../images/about_title_bg.png");
+    background-repeat: no-repeat;
+    background-size: auto;
+    height: 6rem;
+    width: 22rem;
+    z-index: 5;
+}
+
+
+    /* Title text style: use the existing .part1/.part2 spans */
+    .section-title .about-cn,
+    .section-title .about-eng {
+        display: inline-block;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.6rem;
+        line-height: 1;
+        padding: 0px 0px 0px 5rem;
+        backdrop-filter: none; /* keep text crisp */
+        max-width: 12rem;
+    }
+/* Content layout: text left, hero card right (stack on mobile) */
+.about-content {
+}
+
+    /* article / text panel */
+    .about-content .entry-text,
+    .about-content p {
+        border-radius: 8px;
+        color: rgba(255,255,255,0.92);
+        line-height: 1.9;
+        font-size: 1.5rem;
+    }
+
+    /* ensure long paragraphs have good measure */
+    .about-content p {
+        margin: 0 0 18px;
+    }
+
+/* Right hero card wrapper for golden image from content */
+.about-hero-card {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 26px;
+}
+
+/* style images that are part of the about content (golden board) */
+.about-content img {
+    display: block;
+    max-width: 100%;
+    width: 60%;
+    height: auto;
+    transform: translate(60%,-15rem);
+}
+
+/* floating colored backplate behind the image (create layered card look) */
+.about-hero-card::before {
+    content: "";
+    position: absolute;
+    right: -12px;
+    bottom: -22px;
+    width: 460px;
+    height: 300px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(0,177,255,0.06), rgba(255,172,120,0.03));
+    filter: blur(6px);
+    z-index: 0;
+}
+
+/* ensure image sits above backplate */
+.about-hero-card img {
+    position: relative;
+    z-index: 2;
+}
+
+/* Neon decorative icons (user can add elements with these classes) */
+.neon-icon {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    z-index: 1;
+    opacity: 0.95;
+    pointer-events: none;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.6));
+}
+
+    /* sample positions from screenshot */
+    .neon-icon.left {
+        left: 12%;
+        bottom: 18%;
+        transform: translate(-20%, 0);
+    }
+
+    .neon-icon.right {
+        right: 10%;
+        bottom: 12%;
+        transform: translate(10%, 0);
+    }
+
+/* small decorative star sparkles */
+.neon-spark {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffec4a;
+    box-shadow: 0 0 18px #ffec4a, 0 0 8px rgba(255,236,74,0.6);
+    opacity: 0.9;
+}
+
+/* footer social icons center */
+.revamppage-about .footer-social {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 28px;
+    display: flex;
+    gap: 18px;
+    z-index: 6;
+}
+
+    /* small circular buttons */
+    .revamppage-about .footer-social a {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+        color: #fff;
+        text-decoration: none;
+        transition: transform 180ms ease, background 180ms;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+
+        .revamppage-about .footer-social a:hover {
+            transform: translateY(-4px);
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+        }
+
+/* Panels for each block inside .entry-text */
+.entry-text > * {
+    box-sizing: border-box;
+    margin: 0 0 20px;
+    padding: 22px;
+    border-radius: 12px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    display: grid;
+    gap: 2rem;
+    padding: 1.5rem 5rem 3rem 5rem;
+    margin-bottom: 5rem;
+}
+    .entry-text > * title {
+        display: block;
+    }
+    .entry-text > * hidden {
+        display: none;
+    }
+    /* Alternate backgrounds (add as many as you need) */
+    .entry-text > *:nth-child(3n+1) {
+        background-image: url("../images/content_bg_1.png");
+        background-color: rgba(10,6,30,0.45); /* fallback color */
+    }
+
+    .entry-text > *:nth-child(3n+2) {
+        background-image: url("../images/content_bg_2.png");
+        background-color: rgba(20,10,40,0.45);
+    }
+
+    /* If content contains figures/images, keep them full width inside the panel */
+    .entry-text > * img {
+        background-image: none !important;
+        background-color: transparent !important;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+    }
+
+/* Reduce padding on small screens */
+@media (max-width: 720px) {
+    .entry-text > * {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+}
+
+/* Responsive: stack columns on small screens */
+@media (max-width: 980px) {
+    .about-content {
+        grid-template-columns: 1fr;
+    }
+
+    .about-hero-card::before {
+        display: none;
+    }
+
+    .section-title::before {
+        width: 260px;
+        height: 56px;
+        left: -10px;
+        top: -4px;
+    }
+
+    .revamppage-about {
+        padding-bottom: 80px;
+    }
+
+    .neon-icon {
+        display: none;
+    }
+    /* hide decorative neon on small screens for clarity */
+}
+
+/* Small devices: tighter spacing */
+@media (max-width: 540px) {
+    .section-title::before {
+        width: 200px;
+        height: 48px;
+    }
+
+    .section-title .part1 {
+        padding: 12px 18px;
+        font-size: 1rem;
+        transform: skewX(18deg);
+    }
+
+    .about-content .entry-text, .about-content p {
+        padding: 16px;
+        font-size: 0.95rem;
+    }
+
+    .about-content img {
+        display: block;
+        max-width: 100%;
+        width: 80%;
+        height: auto;
+        transform: translate(5rem,-10rem);
+    }
+}
+
+/* Lightbox overlay for clickable images inside .entry-text */
+.revamppage-lightbox {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 6, 18, 0.85);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 220ms ease, visibility 220ms;
+    z-index: 9999;
+    padding: 2rem;
+}
+
+.revamppage-lightbox.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* inner container keeps image centered and responsive */
+.revamppage-lightbox__inner {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.revamppage-lightbox__close-wrap {
+    position: relative;
+    display: flex;
+    gap: 0.4rem;
+    flex-direction: row;
+    align-items: center;
+    width: 5rem;
+    left:45.5rem;
+}
+
+/* displayed image */
+.revamppage-lightbox__img {
+    max-height: 35rem;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    margin: 0.5rem;
+}
+
+/* Close button — right top corner of viewport */
+.revamppage-lightbox__close {
+    position: relative; /* placed relative to .revamppage-lightbox__inner */
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 2rem;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    background-image: url("../images/close_lightbox_btn.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* label text inside close button */
+.revamppage-lightbox__close-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: #ffffff;
+    text-align: left;
+    line-height: 1;
+}
+
+.revamppage-lightbox__close-cn {
+    font-weight: 700;
+    font-size: 13px;
+    display: block;
+}
+
+.revamppage-lightbox__close-eng {
+    font-size: 11px;
+    opacity: 0.85;
+    display: block;
+}
+/* Hover/focus affordance */
+.revamppage-lightbox__close:hover,
+.revamppage-lightbox__close:focus {
+    transform: translateY(-3px);
+    outline: none;
+}
+
+/* Small screens: tighten spacing and enlarge close button tap target */
+@media (max-width: 540px) {
+    .revamppage-lightbox__close {
+        position: relative; /* placed relative to .revamppage-lightbox__inner */
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        border-radius: 2rem;
+        border: none;
+        font-size: 2rem;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        background-image: url("../images/close_icon.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .revamppage-lightbox__close-wrap {
+        left: 22.5rem;
+        top: 4.4rem;
+    }
+
+    .revamppage-lightbox {
+        padding: 1rem;
+    }
+
+    .revamppage-lightbox__img {
+        max-height: 16rem;
+        width: auto;
+        height: auto;
+        display: block;
+        object-fit: contain;
+        margin: 5rem;
+    }
+}
