@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -117,8 +117,18 @@ while (have_posts()):
     <div class="ga-body">
         <header class="sag-hero">
             <div class="sag-hero-inner container">
+                <?php
+                $prev_post = get_previous_post();
+                $next_post = get_next_post();
+                ?>
                 <nav class="sag-nav-arrows" aria-label="<?php esc_attr_e('Post navigation', 'revamppage'); ?>">
-                    <div class="sag-prev"><?php previous_post_link('%link', '&#8249;'); ?></div>
+                    <div class="sag-prev<?php echo $prev_post ? '' : ' sag-nav-disabled'; ?>" aria-disabled="<?php echo $prev_post ? 'false' : 'true'; ?>">
+                        <?php if ($prev_post) {
+                            previous_post_link('%link', '&#8249;');
+                        } else {
+                            echo '<span class="sag-nav-arrow" aria-hidden="true">&#8249;</span>';
+                        } ?>
+                    </div>
                     <div class="sag-gallery-title">
                         <h1 class="sag-title"><?php the_title(); ?></h1>
                         <div class="sag-meta">
@@ -135,7 +145,13 @@ while (have_posts()):
                             <div class="sag-date sag-date-en"><?php echo esc_html__('Launch Date:', 'revamppage') . ' ' . esc_html($date_en); ?></div>
                         </div>
                     </div>
-                    <div class="sag-next"><?php next_post_link('%link', '&#8250;'); ?></div>
+                    <div class="sag-next<?php echo $next_post ? '' : ' sag-nav-disabled'; ?>" aria-disabled="<?php echo $next_post ? 'false' : 'true'; ?>">
+                        <?php if ($next_post) {
+                            next_post_link('%link', '&#8250;');
+                        } else {
+                            echo '<span class="sag-nav-arrow" aria-hidden="true">&#8250;</span>';
+                        } ?>
+                    </div>
                 </nav>
             </div>
         </header>
@@ -143,8 +159,8 @@ while (have_posts()):
         <div class="container sag-gallery-wrap">
             <?php if (!empty($gallery_items)): ?>
                 <div class="sag-gallery">
-                    <?php foreach ($gallery_items as $it): ?>
-                        <div class="sag-gallery-item">
+                    <?php foreach ($gallery_items as $idx => $it): ?>
+                        <div class="sag-gallery-item" data-index="<?php echo (int) $idx; ?>" data-id="<?php echo (int) $idx; ?>">
                             <?php
                             if ($it['type'] === 'attachment' && !empty($it['id'])) {
                                 echo wp_get_attachment_image($it['id'], 'large', false, array('loading' => 'lazy'));
@@ -218,19 +234,24 @@ while (have_posts()):
     <!-- Gallery overlay (hidden by default) -->
     <div id="sag-overlay" class="sag-overlay" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="sag-overlay__inner" role="document">
-            <button class="sag-overlay__close" aria-label="<?php esc_attr_e('Close gallery', 'revamppage'); ?>">×</button>
-
+            <div class="sag-overlay__close-wrap" role="group" aria-label="<?php esc_attr_e('Close gallery', 'revamppage'); ?>">
+                <div class="sag-overlay__close-text">
+                    <span class="sag-overlay__close-cn">關閉</span>
+                    <span class="sag-overlay__close-eng">Close</span>
+                </div>
+                <button class="sag-overlay__close" aria-label="<?php esc_attr_e('Close gallery', 'revamppage'); ?>">×</button>
+            </div>
             <button class="sag-overlay__nav sag-overlay__prev" aria-label="<?php esc_attr_e('Previous', 'revamppage'); ?>">‹</button>
 
             <div class="sag-overlay__track" tabindex="0" role="list">
                 <?php if (!empty($gallery_items)): ?>
                     <?php foreach ($gallery_items as $idx => $it): ?>
-                        <div class="sag-overlay__item" data-index="<?php echo (int) $idx; ?>" role="listitem">
+                        <div class="sag-overlay__item" data-index="<?php echo (int) $idx; ?>" data-id="<?php echo (int) $idx; ?>" role="listitem">
                             <?php
                             if ($it['type'] === 'attachment' && !empty($it['id'])) {
-                                echo wp_get_attachment_image($it['id'], 'large', false, array('loading' => 'lazy', 'alt' => get_the_title()));
+                                echo wp_get_attachment_image($it['id'], 'large', false, array('loading' => 'eager', 'alt' => get_the_title()));
                             } elseif ($it['type'] === 'url' && !empty($it['url'])) {
-                                echo '<img src="' . esc_url($it['url']) . '" alt="' . esc_attr(get_the_title()) . '" loading="lazy">';
+                                echo '<img src="' . esc_url($it['url']) . '" alt="' . esc_attr(get_the_title()) . '" loading="eager">';
                             }
                             ?>
                         </div>

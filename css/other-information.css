@@ -10,32 +10,33 @@
     margin: 0 auto;
 }
 
-    .revamppage-other-information .section-title {
-        position: relative;
-        margin: 60px 0 40px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        background-image: url("../images/about_title_bg.png");
-        background-repeat: no-repeat;
-        background-size: auto;
-        height: 6rem;
-        width: 22rem;
-        z-index: 5;
-    }
+.revamppage-other-information .section-title {
+    position: relative;
+    margin: 1rem 0 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-image: url("../images/about_title_bg.png");
+    background-repeat: no-repeat;
+    background-size: auto;
+    height: 6rem;
+    width: 22rem;
+    z-index: 5;
+}
 
-    .revamppage-other-information .section-title .title-cn,
-    .revamppage-other-information .section-title .title-eng {
-        display: inline-block;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 1.6rem;
-        line-height: 1;
-        padding: 0px 0px 0px 5rem;
-        backdrop-filter: none; /* keep text crisp */
-        max-width: 12rem;
-    }
+.revamppage-other-information .section-title .title-cn,
+.revamppage-other-information .section-title .title-eng {
+    display: inline-block;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.6rem;
+    line-height: 1;
+    padding: 0px 0px 0px 5rem;
+    backdrop-filter: none;
+    /* keep text crisp */
+    max-width: 12rem;
+}
 
 .revamppage-other-information .information-content {
     padding: 0 2rem 3rem;
@@ -49,14 +50,15 @@
     font-size: 1.1rem;
 }
 
-.revamppage-other-information .entry-text > * {
+.revamppage-other-information .entry-text>* {}
+
+.revamppage-other-information .entry-text h2 {
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 1.2rem;
 }
-    .revamppage-other-information .entry-text h2 {
-        text-align: left;
-        margin-top: 0;
-        margin-bottom: 0;
-        font-size: 1.2rem;
-    }
+
 .revamppage-other-information .entry-text p {
     margin: 0 0 1.25rem;
 }
