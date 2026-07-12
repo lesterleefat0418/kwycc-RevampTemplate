@@ -73,7 +73,14 @@ if (have_posts()):
                                 );
                                 ?>
                                 <div class="smartteen-card" data-index="<?php echo esc_attr($index); ?>" data-book="<?php echo esc_attr(wp_json_encode($book_data)); ?>" role="button" tabindex="0">
-                                    <?php echo $cover_html; ?>
+                                    <div class="smartteen-card__title" aria-hidden="true"><?php echo esc_html($book_title); ?></div>
+                                    <div class="smartteen-card__cover">
+                                        <?php echo $cover_html; ?>
+                                    </div>
+                                    <div class="smartteen-card__meta" aria-hidden="true">
+                                        <div class="smartteen-card__intro"><?php echo wp_kses_post($intro); ?></div>
+                                        <button type="button" class="smartteen-card__read-btn" data-open-overlay><?php echo esc_html__('閱讀', 'revamppage'); ?></button>
+                                    </div>
                                 </div>
                                 <?php
                                 $index++;
