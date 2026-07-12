@@ -216,6 +216,288 @@ function revamppage_save_activity_meta($post_id)
 add_action('save_post', 'revamppage_save_activity_meta');
 
 /**
+ * Register custom post type: Smartteen Book
+ */
+function revamppage_register_smartteen_post_type()
+{
+    $labels = array(
+        'name' => esc_html__('Smartteen Books', 'revamppage'),
+        'singular_name' => esc_html__('Smartteen Book', 'revamppage'),
+        'menu_name' => esc_html__('Smartteen Books', 'revamppage'),
+        'add_new' => esc_html__('Add New Smartteen Book', 'revamppage'),
+        'add_new_item' => esc_html__('Add New Smartteen Book', 'revamppage'),
+        'edit_item' => esc_html__('Edit Smartteen Book', 'revamppage'),
+        'new_item' => esc_html__('New Smartteen Book', 'revamppage'),
+        'view_item' => esc_html__('View Smartteen Book', 'revamppage'),
+        'search_items' => esc_html__('Search Smartteen Books', 'revamppage'),
+        'not_found' => esc_html__('No smartteen books found', 'revamppage'),
+        'not_found_in_trash' => esc_html__('No smartteen books found in trash', 'revamppage'),
+    );
+
+    $args = array(
+        'labels' => $labels,
+        'public' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'query_var' => true,
+        'rewrite' => array('slug' => 'smartteen-book'),
+        'capability_type' => 'post',
+        'has_archive' => false,
+        'hierarchical' => false,
+        'menu_position' => 6,
+        'menu_icon' => 'dashicons-book-alt',
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt'),
+    );
+
+    register_post_type('smartteen', $args);
+}
+add_action('init', 'revamppage_register_smartteen_post_type');
+
+function revamppage_add_smartteen_meta_boxes()
+{
+    add_meta_box(
+        'revamppage_smartteen_details',
+        esc_html__('Smartteen Book Details', 'revamppage'),
+        'revamppage_smartteen_meta_box_callback',
+        'smartteen',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'revamppage_add_smartteen_meta_boxes');
+
+/**
+ * Enqueue media scripts for smartteen post edit screens
+ */
+function revamppage_admin_enqueue($hook) {
+    if ($hook !== 'post.php' && $hook !== 'post-new.php') return;
+    $screen = get_current_screen();
+    if (!$screen) return;
+    if ($screen->post_type !== 'smartteen') return;
+    // Enqueue WP media scripts so wp.media is available in meta box
+    wp_enqueue_media();
+}
+add_action('admin_enqueue_scripts', 'revamppage_admin_enqueue');
+
+function revamppage_smartteen_meta_box_callback($post)
+{
+    wp_nonce_field('revamppage_smartteen_nonce', 'revamppage_smartteen_nonce');
+
+    $intro = get_post_meta($post->ID, '_smartteen_intro', true);
+    $pages = get_post_meta($post->ID, '_smartteen_pages', true);
+    if (!is_array($pages)) {
+        $pages = array();
+    }
+
+    // custom thumbnail attachment id (optional)
+    $thumb_id = get_post_meta($post->ID, '_smartteen_thumb_id', true);
+    $thumb_html = '';
+    if ($thumb_id) {
+        $thumb_html = wp_get_attachment_image($thumb_id, 'thumbnail', false, array('style' => 'max-width:160px; height:auto; display:block;'));
+    }
+    ?>
+    <div class="revamppage-smartteen-meta">
+        <p><?php esc_html_e('Cover image: choose a thumbnail specifically for the carousel (optional). If not set, the Featured Image will be used. You can also use the site Document Gallery thumbnail settings by filtering the cover size.', 'revamppage'); ?></p>
+
+        <div style="margin-bottom:16px; display:flex; gap:1rem; align-items:flex-start;">
+            <div id="revamppage-smartteen-thumb-preview" style="min-width:160px;"><?php echo $thumb_html; ?></div>
+            <div>
+                <input type="hidden" id="smartteen_thumb_id" name="smartteen_thumb_id" value="<?php echo esc_attr($thumb_id); ?>">
+                <button type="button" class="button" id="revamppage-select-thumb"><?php esc_html_e('Select Thumbnail', 'revamppage'); ?></button>
+                <button type="button" class="button" id="revamppage-remove-thumb" style="display:<?php echo $thumb_id ? 'inline-block' : 'none'; ?>; margin-left:8px;"><?php esc_html_e('Remove', 'revamppage'); ?></button>
+                <p style="margin-top:8px; color:#666;"><?php esc_html_e('If empty, Featured Image will be used as cover.'); ?></p>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+            <label for="smartteen_intro" style="display:block; font-weight:700; margin-bottom:6px;">
+                <?php esc_html_e('Introduction', 'revamppage'); ?>
+            </label>
+            <textarea id="smartteen_intro" name="smartteen_intro" rows="4" style="width:100%; padding:8px; font-size:14px;"><?php echo esc_textarea($intro); ?></textarea>
+        </div>
+
+        <div id="revamppage-smartteen-pages">
+            <h4 style="margin-bottom: 12px;"><?php esc_html_e('Book Pages', 'revamppage'); ?></h4>
+            <?php if (empty($pages)): ?>
+                <div class="revamppage-smartteen-page-item">
+                    <div style="margin-bottom: 8px;"><strong><?php esc_html_e('Page 1', 'revamppage'); ?></strong></div>
+                    <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Page title', 'revamppage'); ?></label>
+                    <input type="text" name="smartteen_page_titles[]" value="" style="width:100%; padding:8px; margin-bottom:8px;">
+                    <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Page content', 'revamppage'); ?></label>
+                    <textarea name="smartteen_page_contents[]" rows="4" style="width:100%; padding:8px; margin-bottom:8px;"></textarea>
+                    <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Optional page image URL', 'revamppage'); ?></label>
+                    <input type="url" name="smartteen_page_images[]" value="" style="width:100%; padding:8px;">
+                    <button type="button" class="button revamppage-remove-smartteen-page" style="margin-top:10px; display:none;"><?php esc_html_e('Remove page', 'revamppage'); ?></button>
+                </div>
+            <?php else: ?>
+                <?php foreach ($pages as $page_index => $page_item): ?>
+                    <div class="revamppage-smartteen-page-item" style="border:1px solid #ddd; padding:12px; margin-bottom:12px; border-radius:4px;">
+                        <div style="margin-bottom:8px;"><strong><?php echo sprintf(esc_html__('Page %d', 'revamppage'), $page_index + 1); ?></strong></div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Page title', 'revamppage'); ?></label>
+                        <input type="text" name="smartteen_page_titles[]" value="<?php echo esc_attr($page_item['title'] ?? ''); ?>" style="width:100%; padding:8px; margin-bottom:8px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Page content', 'revamppage'); ?></label>
+                        <textarea name="smartteen_page_contents[]" rows="4" style="width:100%; padding:8px; margin-bottom:8px;"><?php echo esc_textarea($page_item['content'] ?? ''); ?></textarea>
+                        <label style="display:block; margin-bottom:4px; font-weight:600;"><?php esc_html_e('Optional page image URL', 'revamppage'); ?></label>
+                        <input type="url" name="smartteen_page_images[]" value="<?php echo esc_attr($page_item['image'] ?? ''); ?>" style="width:100%; padding:8px;">
+                        <button type="button" class="button revamppage-remove-smartteen-page" style="margin-top:10px;"><?php esc_html_e('Remove page', 'revamppage'); ?></button>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <button type="button" class="button button-primary" id="revamppage-add-smartteen-page" style="margin-top:8px;">
+            <?php esc_html_e('Add Page', 'revamppage'); ?>
+        </button>
+    </div>
+    <script>
+        (function () {
+            var container = document.getElementById('revamppage-smartteen-pages');
+            var template = document.createElement('div');
+            template.className = 'revamppage-smartteen-page-item';
+            template.innerHTML = '<div style="margin-bottom:8px;"><strong>Page {{pageNumber}}</strong></div>' +
+                '<label style="display:block; margin-bottom:4px; font-weight:600;"><?php echo esc_js(esc_html__('Page title', 'revamppage')); ?></label>' +
+                '<input type="text" name="smartteen_page_titles[]" value="" style="width:100%; padding:8px; margin-bottom:8px;">' +
+                '<label style="display:block; margin-bottom:4px; font-weight:600;"><?php echo esc_js(esc_html__('Page content', 'revamppage')); ?></label>' +
+                '<textarea name="smartteen_page_contents[]" rows="4" style="width:100%; padding:8px; margin-bottom:8px;"></textarea>' +
+                '<label style="display:block; margin-bottom:4px; font-weight:600;"><?php echo esc_js(esc_html__('Optional page image URL', 'revamppage')); ?></label>' +
+                '<input type="url" name="smartteen_page_images[]" value="" style="width:100%; padding:8px;">' +
+                '<button type="button" class="button revamppage-remove-smartteen-page" style="margin-top:10px;"><?php echo esc_js(esc_html__('Remove page', 'revamppage')); ?></button>';
+
+            function updatePageHeaders() {
+                var items = container.querySelectorAll('.revamppage-smartteen-page-item');
+                items.forEach(function (item, index) {
+                    var header = item.querySelector('strong');
+                    if (header) {
+                        header.textContent = 'Page ' + (index + 1);
+                    }
+                });
+            }
+
+            function attachRemoveButton(button) {
+                button.addEventListener('click', function () {
+                    var item = button.closest('.revamppage-smartteen-page-item');
+                    if (item) {
+                        item.parentNode.removeChild(item);
+                        updatePageHeaders();
+                    }
+                });
+            }
+
+            container.querySelectorAll('.revamppage-remove-smartteen-page').forEach(function (btn) {
+                attachRemoveButton(btn);
+            });
+
+            document.getElementById('revamppage-add-smartteen-page').addEventListener('click', function () {
+                var newItem = template.cloneNode(true);
+                newItem.style.border = '1px solid #ddd';
+                newItem.style.padding = '12px';
+                newItem.style.marginBottom = '12px';
+                container.appendChild(newItem);
+                attachRemoveButton(newItem.querySelector('.revamppage-remove-smartteen-page'));
+                updatePageHeaders();
+            });
+
+            // Media selector for thumbnail
+            var frame = null;
+            var selectBtn = document.getElementById('revamppage-select-thumb');
+            var removeBtn = document.getElementById('revamppage-remove-thumb');
+            var preview = document.getElementById('revamppage-smartteen-thumb-preview');
+            var input = document.getElementById('smartteen_thumb_id');
+
+            if (selectBtn) {
+                selectBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (frame) frame.open();
+                    else {
+                        frame = wp.media({ title: '<?php echo esc_js(esc_html__('Select thumbnail', 'revamppage')); ?>', multiple: false });
+                        frame.on('select', function () {
+                            var att = frame.state().get('selection').first().toJSON();
+                            if (att && att.id) {
+                                input.value = att.id;
+                        // Preview the original uploaded image (no cropping) to match carousel behavior
+                        var src = att.url || (att.sizes && (att.sizes.full && att.sizes.full.url)) || '';
+                        preview.innerHTML = '<img src="' + src + '" style="max-width:160px; display:block; height:auto;">';
+                        removeBtn.style.display = 'inline-block';
+                            }
+                        });
+                        frame.open();
+                    }
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    input.value = '';
+                    preview.innerHTML = '';
+                    removeBtn.style.display = 'none';
+                });
+            }
+        })();
+    </script>
+    <?php
+}
+
+function revamppage_save_smartteen_meta($post_id)
+{
+    if (!isset($_POST['revamppage_smartteen_nonce']) || !wp_verify_nonce($_POST['revamppage_smartteen_nonce'], 'revamppage_smartteen_nonce')) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    if (get_post_type($post_id) !== 'smartteen') {
+        return;
+    }
+
+    if (isset($_POST['smartteen_intro'])) {
+        update_post_meta($post_id, '_smartteen_intro', sanitize_textarea_field($_POST['smartteen_intro']));
+    }
+
+    $pages = array();
+    $titles = isset($_POST['smartteen_page_titles']) && is_array($_POST['smartteen_page_titles']) ? $_POST['smartteen_page_titles'] : array();
+    $contents = isset($_POST['smartteen_page_contents']) && is_array($_POST['smartteen_page_contents']) ? $_POST['smartteen_page_contents'] : array();
+    $images = isset($_POST['smartteen_page_images']) && is_array($_POST['smartteen_page_images']) ? $_POST['smartteen_page_images'] : array();
+
+    foreach ($contents as $index => $content) {
+        $title = sanitize_text_field($titles[$index] ?? '');
+        $image = esc_url_raw($images[$index] ?? '');
+        $content = wp_kses_post($content);
+        if ($title !== '' || $content !== '' || $image !== '') {
+            $pages[] = array(
+                'title' => $title,
+                'content' => $content,
+                'image' => $image,
+            );
+        }
+    }
+
+    if (!empty($pages)) {
+        update_post_meta($post_id, '_smartteen_pages', $pages);
+    } else {
+        delete_post_meta($post_id, '_smartteen_pages');
+    }
+
+    // Save optional thumbnail attachment id
+    if (isset($_POST['smartteen_thumb_id']) && $_POST['smartteen_thumb_id'] !== '') {
+        $thumb_id = intval($_POST['smartteen_thumb_id']);
+        if ($thumb_id > 0 && get_post_status($thumb_id)) {
+            update_post_meta($post_id, '_smartteen_thumb_id', $thumb_id);
+        }
+    } else {
+        delete_post_meta($post_id, '_smartteen_thumb_id');
+    }
+}
+
+add_action('save_post', 'revamppage_save_smartteen_meta');
+
+/**
  * Menu fallback - displays list of pages when no menu is assigned
  */
 function revamppage_menu_fallback()
@@ -248,6 +530,23 @@ function revamppage_enqueue()
         wp_enqueue_script(
             'revamppage-past-activities',
             get_stylesheet_directory_uri() . '/js/past-activities.js',
+            array(),
+            '1.0',
+            true
+        );
+    }
+
+    if (is_page_template('page-smartteen.php')) {
+        wp_enqueue_style(
+            'revamppage-smartteen',
+            get_stylesheet_directory_uri() . '/css/smartteen.css',
+            array('revamppage-style'),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'revamppage-smartteen',
+            get_stylesheet_directory_uri() . '/js/smartteen.js',
             array(),
             '1.0',
             true

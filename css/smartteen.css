@@ -1,0 +1,393 @@
+.revamppage-smartteen {
+    color: #ffffff;
+}
+
+.smartteen-cn {
+    display: inline;
+}
+
+.smartteen-eng {
+    display: none;
+}
+
+.smartteen-overlay__close-cn {
+    display: block;
+}
+
+.smartteen-overlay__close-eng {
+    display: none;
+}
+
+.revamppage-smartteen .section-title {
+    margin-bottom: 1.5rem;
+    position: relative;
+    margin: 1rem 0 0px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    text-align: center;
+    background-image: url("../images/about_title_bg.png");
+    background-repeat: no-repeat;
+    background-size: auto;
+    height: 6rem;
+    width: 22rem;
+    z-index: 5;
+}
+
+.revamppage-smartteen .section-title .smartteen-cn,
+.revamppage-smartteen .section-title .smartteen-eng {
+    max-width: 17rem;
+    max-height: 5rem;
+    padding-left: 4rem;
+    line-height: 1.5;
+    font-weight: 700;
+    color: #fff;
+    font-size: clamp(0.9rem, 1.1rem + 0.8vw, 1.6rem);
+    overflow: hidden;
+    display: inline-block;
+    box-sizing: border-box;
+}
+
+.smartteen-carousel-section {
+    position: relative;
+    background-image: url(../images/bgBlurredBlack.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 0rem 0rem;
+    margin-bottom: 10rem;
+    height: 50rem;
+}
+
+.smartteen-carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.smartteen-carousel-viewport {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.smartteen-carousel-viewport::-webkit-scrollbar,
+.smartteen-carousel-viewport::-webkit-scrollbar-track,
+.smartteen-carousel-viewport::-webkit-scrollbar-thumb {
+    display: none;
+}
+
+.smartteen-carousel {
+    display: flex;
+    gap: 1rem;
+    box-sizing: border-box;
+    align-items: center;
+    width: max-content;
+    will-change: transform;
+    padding: 8px 0;
+}
+
+.smartteen-carousel-footer {
+    margin-top: 1.25rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.smartteen-active-info {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.smartteen-active-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.smartteen-active-intro {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.9);
+    max-height: 6.6rem;
+    /* limit height and allow scrolling if longer */
+    overflow-y: auto;
+}
+
+.smartteen-card {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    height: clamp(360px, 42vh, 520px);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    transform: scale(0.88);
+    transition: transform 0.28s cubic-bezier(.2, .9, .2, 1), box-shadow 0.28s ease, opacity 0.22s ease;
+    min-height: 0;
+    scroll-snap-align: center;
+}
+
+/* Active (center) card is noticeably larger */
+.smartteen-card.active,
+.smartteen-card:focus {
+    transform: scale(1.1);
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.45);
+    opacity: 1;
+    z-index: 5;
+}
+
+/* dim non-active cards */
+.smartteen-card:not(.active) {
+    opacity: 0.78;
+}
+
+.smartteen-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.smartteen-carousel__nav {
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.32);
+    color: #ffffff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.smartteen-carousel__nav:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.smartteen-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 7, 20, 0.94);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    z-index: 9999;
+}
+
+.smartteen-overlay.open {
+    display: flex;
+}
+
+.smartteen-overlay__inner {
+    position: relative;
+    max-width: 1200px;
+    width: min(100%, 1100px);
+    max-height: 92vh;
+    overflow: hidden;
+    background: rgba(16, 22, 54, 0.98);
+    border-radius: 28px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+}
+
+.smartteen-overlay__close-wrap {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 10;
+}
+
+.smartteen-overlay__close-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    color: #ffffff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.smartteen-overlay__close-cn,
+.smartteen-overlay__close-eng {
+    display: block;
+}
+
+.smartteen-overlay__close {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.smartteen-overlay__content {
+    position: relative;
+    padding: 4rem 3rem 2rem;
+    color: #f3f4ff;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 2rem;
+}
+
+.smartteen-overlay__book-meta {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.smartteen-overlay__book-cover {
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.smartteen-overlay__book-cover img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+.smartteen-overlay__book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.smartteen-overlay__book-title {
+    margin: 0;
+    font-size: clamp(1.6rem, 2vw, 2.5rem);
+    font-weight: 800;
+}
+
+.smartteen-overlay__book-intro {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+    max-height: 20rem;
+    overflow-y: auto;
+}
+
+.smartteen-overlay__page-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.smartteen-overlay__page-nav {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.smartteen-overlay__page-indicator {
+    flex: 1;
+    text-align: center;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.smartteen-overlay__page-viewer {
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+}
+
+.smartteen-overlay__book-page {
+    min-height: 34rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    padding: 2rem;
+    overflow-y: auto;
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.smartteen-overlay__book-page img {
+    max-width: 100%;
+    display: block;
+    margin: 1rem auto;
+    border-radius: 18px;
+}
+
+.smartteen-overlay__book-page h4 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+}
+
+@media (max-width: 980px) {
+    .smartteen-overlay__content {
+        grid-template-columns: 1fr;
+        padding: 3rem 1.5rem 1.5rem;
+    }
+
+    .smartteen-overlay__book-meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .revamppage-smartteen {
+        padding: 2rem 0 3rem;
+    }
+
+    .smartteen-carousel-wrapper {
+        flex-direction: column;
+    }
+
+    .smartteen-carousel__nav {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .smartteen-card {
+        width: 72vw;
+        min-width: auto;
+    }
+
+    .smartteen-overlay__inner {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px;
+    }
+
+    .smartteen-overlay__content {
+        padding: 2rem 1.25rem 1.5rem;
+    }
+}
