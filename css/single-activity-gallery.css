@@ -301,6 +301,7 @@
 .sag-overlay__inner {
     position: relative;
     width: 90%;
+    height: 90%;
     padding: 2rem 3rem;
     box-sizing: border-box;
     display: flex;
@@ -363,15 +364,14 @@
 /* overlay navigation arrows (left/right) */
 .sag-overlay__nav {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 0;
     width: 56px;
     height: 56px;
     border-radius: 50%;
     border: 0;
     background-color: transparent;
     color: #fff;
-    font-size: 28px;
+    font-size: 3rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -380,11 +380,11 @@
 }
 
 .sag-overlay__prev {
-    left: -5rem;
+    left: 47%;
 }
 
 .sag-overlay__next {
-    right: -5rem;
+    right: 47%;
 }
 
 .sag-overlay__nav:disabled {
@@ -468,23 +468,74 @@
 }
 
 /* Maintain responsive behavior */
+/* Small-screen overrides to make active item fill viewport and ensure title/controls visible */
+.sag-overlay__track {
+    gap: 1.25rem;
+    /* consistent gap like smartteen */
+    padding-inline-start: 1rem;
+    padding-inline-end: 1rem;
+}
+
+.sag-overlay__item {
+    width: min(64vw, 540px);
+    max-height: 100vh;
+    transform: scale(0.82);
+    transition: transform .28s cubic-bezier(.2, .9, .2, 1), opacity .22s ease;
+}
+
+.sag-overlay__item.active {
+    transform: scale(1);
+    z-index: 6;
+    opacity: 1;
+}
+
+/* Make sure images fit inside the item and don't overflow */
+.sag-overlay__item img {
+    max-width: 100%;
+    max-height: calc(100vh - 200px);
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+
 @media (max-width: 720px) {
     .single-activity-gallery .ga-body {
         background-image: url("../images/bgBlurredBlack.png");
         background-repeat: no-repeat;
         background-size: cover;
-        padding: 2rem 1cap;
+        padding: 2rem 1rem;
         margin-bottom: 5rem;
     }
 
+    /* On small screens, make active item occupy most of width */
     .sag-overlay__item {
         width: 88vw;
         max-height: 78vh;
+        transform: scale(0.9);
+    }
+
+    .sag-overlay__item.active {
+        transform: scale(1.03);
     }
 
     .sag-overlay__item img {
-        height: 78vh;
-        max-height: 78vh;
+        height: 72vh;
+        max-height: 72vh;
+    }
+
+    .sag-overlay__track {
+        padding-inline-start: calc((100% - 88vw) / 2);
+        padding-inline-end: calc((100% - 88vw) / 2);
+        scroll-padding-inline: calc((100% - 88vw) / 2);
+    }
+
+    .sag-overlay__prev {
+        left: 0.5rem;
+    }
+
+    .sag-overlay__next {
+        right: 0.5rem;
     }
 
     .sag-related-grid {

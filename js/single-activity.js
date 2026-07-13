@@ -167,8 +167,92 @@
     var isProgrammaticScroll = false;
     var programmaticScrollTimer = null;
 
+    // For infinite loop support we'll keep an originals array (pre-clone state)
+    var originals = items.slice();
+
     function refreshItems() {
         items = qsa('.sag-overlay__item', overlay);
+    }
+
+    function removeClones() {
+        var clones = qsa('.sag-overlay__item[data-clone], .sag-overlay__item.clone, .sag-overlay__item.__clone', overlay);
+        clones.forEach(function (c) {
+            if (c && c.parentNode) c.parentNode.removeChild(c);
+        });
+    }
+
+    function cloneForInfiniteLoop() {
+        removeClones();
+        originals = qsa('.sag-overlay__item', overlay).slice();
+        if (originals.length < 2) return; // nothing to clone
+
+        var fragPre = document.createDocumentFragment();
+        var fragPost = document.createDocumentFragment();
+
+        originals.forEach(function (orig) {
+            var clonePre = orig.cloneNode(true);
+            clonePre.setAttribute('data-clone', 'pre');
+            clonePre.classList.add('__clone');
+            fragPre.appendChild(clonePre);
+
+            var clonePost = orig.cloneNode(true);
+            clonePost.setAttribute('data-clone', 'post');
+            clonePost.classList.add('__clone');
+            fragPost.appendChild(clonePost);
+        });
+
+        // insert pre clones before first child
+        if (track.firstChild) track.insertBefore(fragPre, track.firstChild);
+        else track.appendChild(fragPre);
+        // append post clones
+        track.appendChild(fragPost);
+
+        // refresh items reference
+        refreshItems();
+
+        // debug information to help verify clones exist
+        try {
+            console.debug('cloneForInfiniteLoop: originals=', originals.length, 'items after clone=', items.length);
+            // ensure cloned images have same src (log first few)
+            var sampleClones = items.slice(0, Math.min(6, items.length)).map(function(it){ var img = it.querySelector('img'); return img ? img.src : null; });
+            console.debug('cloneForInfiniteLoop: sample items srcs=', sampleClones);
+        } catch (e) { /* ignore */ }
+    }
+
+    function calculateSpacing() {
+        var sample = items[0];
+        if (!sample) return { cardWidth: 0, gap: 0, spacing: 0 };
+        var style = window.getComputedStyle(track);
+        var gap = style && style.gap ? parseFloat(style.gap) || 0 : 0;
+        var cardWidth = sample.offsetWidth;
+        var spacing = cardWidth + gap;
+        return { cardWidth: cardWidth, gap: gap, spacing: spacing };
+    }
+
+    function maybeWrapScroll() {
+        // enable infinite wrapping when clones exist
+        if (!originals || originals.length < 2) return;
+        refreshItems();
+        var spacing = calculateSpacing();
+        if (spacing.spacing === 0) return;
+
+        var totalOriginalWidth = originals.length * spacing.spacing;
+        // debug
+        try { console.debug('maybeWrapScroll: scrollLeft=', track.scrollLeft, 'maxScroll=', track.scrollWidth - track.clientWidth, 'spacing=', spacing); } catch(e){}
+        if (track.scrollLeft <= spacing.spacing * 0.5) {
+            // jump forward by one block of originals
+            track.scrollLeft += totalOriginalWidth;
+            try { console.debug('maybeWrapScroll: wrapped forward, new scrollLeft=', track.scrollLeft); } catch(e){}
+            return;
+        }
+
+        var maxScroll = track.scrollWidth - track.clientWidth;
+        if (track.scrollLeft >= maxScroll - spacing.spacing * 0.5) {
+            // jump backward by one block of originals
+            track.scrollLeft -= totalOriginalWidth;
+            try { console.debug('maybeWrapScroll: wrapped backward, new scrollLeft=', track.scrollLeft); } catch(e){}
+            return;
+        }
     }
 
     function clampIndex(index) {
@@ -178,6 +262,13 @@
 
     function updateNavButtons() {
         if (!btnPrev || !btnNext || !items.length) return;
+        // With infinite loop nav always enabled
+        var infinite = originals && originals.length > 1 && items.length > originals.length;
+        if (infinite) {
+            btnPrev.disabled = false;
+            btnNext.disabled = false;
+            return;
+        }
         btnPrev.disabled = currentIndex <= 0;
         btnNext.disabled = currentIndex >= items.length - 1;
     }
@@ -312,11 +403,33 @@
         document.body.classList.add('revamp-overlay-open');
 
         function activateOverlay() {
+            // prepare infinite looping clones
+            cloneForInfiniteLoop();
+            // refresh and ensure layout is ready before centering
             refreshItems();
             updateCarouselPadding();
-            showIndex(index, false);
-            updateNavButtons();
-            if (track) track.focus();
+
+            // If clones were added, adjust index to point to the middle copy so wrapping works
+            var startIndex = index;
+            if (originals && originals.length > 1 && items.length >= originals.length * 3) {
+                // place on the middle original set
+                startIndex = index + originals.length;
+            }
+
+            // Ensure DOM layout is calculated (images may affect sizes)
+            requestAnimationFrame(function () {
+                refreshItems();
+                var el = items[startIndex];
+                if (el) {
+                    // compute centered left and set instantly (no smooth) to avoid interim blank gaps
+                    var left = getCenteredScrollLeft(el);
+                    track.scrollLeft = left;
+                    // mark active
+                    setActive(startIndex);
+                }
+                updateNavButtons();
+                if (track) track.focus();
+            });
         }
 
         var scheduleActivate = function () {
@@ -376,16 +489,66 @@
         if (img) img.style.cursor = 'zoom-in';
     });
 
+    function findClosestCard() {
+        if (!track || !items.length) return null;
+        var wrapRect = track.getBoundingClientRect();
+        var wrapCenter = wrapRect.left + wrapRect.width / 2;
+        var closest = null;
+        var minDist = Infinity;
+        items.forEach(function (card) {
+            var rect = card.getBoundingClientRect();
+            var center = rect.left + rect.width / 2;
+            var dist = Math.abs(center - wrapCenter);
+            if (dist < minDist) {
+                minDist = dist;
+                closest = card;
+            }
+        });
+        return closest;
+    }
+
+    function refreshCardList() {
+        refreshItems();
+        // alias for compatibility
+        return items;
+    }
+
+    function navigate(delta) {
+        refreshCardList();
+        var closest = findClosestCard();
+        if (!closest) return;
+        var current = items.indexOf(closest);
+        if (current === -1) return;
+        var targetIndex = current + delta;
+        if (targetIndex < 0) targetIndex = items.length - 1;
+        if (targetIndex >= items.length) targetIndex = 0;
+        var targetCard = items[targetIndex];
+        if (!targetCard) return;
+        var left = targetCard.offsetLeft + targetCard.offsetWidth / 2 - track.clientWidth / 2;
+        track.scrollTo({ left: left, behavior: 'smooth' });
+        setTimeout(function () { updateActiveByCenter(); }, 320);
+    }
+
     if (btnClose) btnClose.addEventListener('click', closeOverlay);
-    if (btnPrev) btnPrev.addEventListener('click', function () { scrollToIndex(-1); });
-    if (btnNext) btnNext.addEventListener('click', function () { scrollToIndex(1); });
+    if (btnPrev) btnPrev.addEventListener('click', function () { navigate(-1); });
+    if (btnNext) btnNext.addEventListener('click', function () { navigate(1); });
 
     overlay.addEventListener('click', function (e) {
         if (e.target === overlay) closeOverlay();
     });
 
     if (track) {
-        track.addEventListener('scroll', debouncedUpdateActive, { passive: true });
+        // on scroll, allow wrapping then update active
+        var rafId = null;
+        track.addEventListener('scroll', function () {
+            if (rafId === null) {
+                rafId = requestAnimationFrame(function () {
+                    maybeWrapScroll();
+                    debouncedUpdateActive();
+                    rafId = null;
+                });
+            }
+        }, { passive: true });
 
         var touchTimer;
         track.addEventListener('touchstart', function () { clearTimeout(touchTimer); }, { passive: true });
