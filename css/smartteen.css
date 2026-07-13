@@ -56,7 +56,8 @@
     background-size: cover;
     padding: 0rem 0rem;
     margin-bottom: 10rem;
-    height: 50rem;
+    /* increased height by ~28% so covers are larger and more room for images */
+    height: 64rem;
 }
 
 .smartteen-carousel-wrapper {
@@ -76,6 +77,10 @@
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    /* center carousel contents vertically when viewport height increases */
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
 .smartteen-carousel-viewport::-webkit-scrollbar,
@@ -122,7 +127,8 @@
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    /* ensure children (cover) align to the top and fill width */
     justify-content: flex-start;
     width: clamp(180px, 22vw, 300px);
     min-width: 0;
@@ -133,7 +139,8 @@
     transform: scale(0.6);
     /* non-active are 40% smaller */
     transition: transform 0.28s cubic-bezier(.2, .9, .2, 1), box-shadow 0.28s ease, opacity 0.22s ease;
-    min-height: 0;
+    /* Give cards a consistent minimum height so images stay aligned even when titles/intros differ in length */
+    min-height: 420px;
     scroll-snap-align: center;
     gap: 2rem;
 }
@@ -178,14 +185,31 @@
     overflow: hidden;
     background: rgba(255, 255, 255, 0.02);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    /* make cover a larger responsive area so important image patterns remain visible */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* responsive cover height: minimum 300px, scales with viewport, max 600px */
+    flex: 0 0 clamp(300px, 36vw, 600px);
 }
 
+/* Images use contain so the full artwork/pattern is visible */
 .smartteen-card__cover img {
     width: 100%;
-    height: auto;
+    height: 100%;
     object-fit: contain;
+    /* ensure entire image is visible (no cropping) */
+    object-position: center;
     display: block;
 }
+
+/* Active card scales via transform; keep same baseline flex-basis so transform enlarges visually */
+.smartteen-card.active .smartteen-card__cover,
+.smartteen-card:focus .smartteen-card__cover {
+    flex-basis: clamp(300px, 36vw, 600px);
+}
+
+/* Mobile override in the existing media query will reduce this size (see below) */
 
 .smartteen-card__meta {
     text-align: center;
@@ -194,6 +218,13 @@
     opacity: 0;
     transition: opacity 0.22s ease, transform 0.22s ease;
     pointer-events: none;
+    /* don't let meta content push the cover on non-active cards */
+    height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.75rem;
 }
 
 .smartteen-card.active .smartteen-card__meta,
@@ -201,6 +232,9 @@
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    height: auto;
+    overflow: visible;
+    flex: 1 1 auto;
 }
 
 .smartteen-card__intro {
@@ -443,6 +477,22 @@
     .smartteen-card {
         width: 72vw;
         min-width: auto;
+        /* reduce min-height on narrow screens to avoid overly tall cards */
+        min-height: auto;
+        align-items: stretch;
+        /* keep cover aligned */
+    }
+
+    /* smaller cover height on mobile so layout isn't too tall */
+    .smartteen-card__cover {
+        flex: 0 0 50vw;
+        /* cover ~50% of viewport width as height on small screens */
+    }
+
+    .smartteen-card__cover img {
+        object-fit: contain;
+        /* avoid cropping important patterns on mobile */
+        height: 100%;
     }
 
     .smartteen-overlay__inner {
