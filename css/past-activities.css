@@ -191,7 +191,7 @@ input[type="search"]::-ms-reveal {
     background-color: transparent;
     background-image: url("../images/activities_bottom_bg.png");
     background-position: center center;
-    background-size: auto;
+    background-size: cover;
     background-repeat: no-repeat;
 }
 

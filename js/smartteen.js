@@ -190,35 +190,43 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function openOverlay(book) {
-        if (!overlay) return;
+        if (!overlay) {
+            console.warn('openOverlay: no overlay element');
+            return;
+        }
         // Safety guard: ensure the current centered/active card corresponds to the requested book.
         // This prevents opening the overlay for non-active books if some caller invokes openOverlay directly.
         try {
             var activeCard = track.querySelector('.smartteen-card.active');
-            if (activeCard && book && typeof book.id !== 'undefined') {
+            var requestedId = (book && typeof book.id !== 'undefined') ? String(book.id) : null;
+            if (activeCard && requestedId) {
                 var activeBookData = activeCard.getAttribute('data-book');
                 if (activeBookData) {
                     var parsed = JSON.parse(activeBookData);
-                    if (parsed && parsed.id && parsed.id !== book.id) {
-                        // requested book is not the active card - refuse to open
+                    var activeId = parsed && typeof parsed.id !== 'undefined' ? String(parsed.id) : null;
+                    if (activeId && requestedId && activeId !== requestedId) {
+                        console.warn('openOverlay refused: active card id != requested id', { activeId: activeId, requestedId: requestedId });
                         return;
                     }
                 }
-            } else if (!activeCard) {
+            } else if (!activeCard && requestedId) {
                 // no active card found - ensure the closest card matches the requested book
                 var closest = findClosestCard();
                 if (closest) {
                     var closestData = closest.getAttribute('data-book');
                     if (closestData) {
                         var parsedClosest = JSON.parse(closestData);
-                        if (parsedClosest && parsedClosest.id && parsedClosest.id !== book.id) {
+                        var closestId = parsedClosest && typeof parsedClosest.id !== 'undefined' ? String(parsedClosest.id) : null;
+                        if (closestId && requestedId && closestId !== requestedId) {
+                            console.warn('openOverlay refused: closest card id != requested id', { closestId: closestId, requestedId: requestedId });
                             return;
                         }
                     }
                 }
             }
         } catch (e) {
-            // parsing error - fail closed
+            // parsing error - fail closed but log for debugging
+            console.error('openOverlay: JSON parse error or other exception', e);
             return;
         }
 
@@ -249,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isLocalhost) {
                 // For local dev, many viewers can't embed — show link and an advisory message
                 if (fallbackMsgEl) {
-                    //fallbackMsgEl.textContent = 'Local file: preview may be blocked in iframe. Use "Open PDF in new tab" to view.';
+                    fallbackMsgEl.textContent = 'If preview may be blocked in iframe. Use "Open PDF in new tab" to view.';
                     fallbackMsgEl.style.display = '';
                 }
             } else {
@@ -370,31 +378,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachCardEvents() {
         refreshCardList();
         cards.forEach(function (card) {
-            // Skip if we've already attached handlers
-            if (card.dataset.smartteenAttached === '1') {
-                return;
-            }
-
-            // Skip cloned elements used for infinite looping
-            if (card.getAttribute('data-clone') || card.dataset.clone) {
-                return;
-            }
-
-            // Skip elements that are not visible in layout (display:none or detached)
-            if (card.getClientRects().length === 0) {
-                return;
-            }
-
             function handleOpenIntent(evt, book) {
                 if (isSnapping) {
                     if (evt && evt.preventDefault) evt.preventDefault();
                     return;
                 }
-                // If card is centered enough, open overlay
-                if (isCardCentered(card)) {
-                    openOverlay(book);
-                    return;
-                }
+                openOverlay(book);
                 // Otherwise snap to center
                 var left = card.offsetLeft + card.offsetWidth / 2 - viewport.clientWidth / 2;
                 isSnapping = true;

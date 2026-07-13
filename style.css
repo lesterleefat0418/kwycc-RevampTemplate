@@ -11,8 +11,8 @@ Author: Lester
     --accent: #ff6a00;
     --text: #fff;
     /* sizes */
-    --card-large-w: 352px;
-    --card-large-h: 538px;
+    --card-large-w: 402px;
+    --card-large-h: 588px;
     --card-scale-other: 0.8;
     /* other cards are 75% of large */
     --card-small-w: calc(var(--card-large-w) * var(--card-scale-other));
