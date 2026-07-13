@@ -55,9 +55,7 @@
     background-repeat: no-repeat;
     background-size: cover;
     padding: 0rem 0rem;
-    margin-bottom: 10rem;
-    /* increased height by ~28% so covers are larger and more room for images */
-    height: 64rem;
+    margin-bottom: 5rem;
 }
 
 .smartteen-carousel-wrapper {
@@ -71,6 +69,8 @@
 .smartteen-carousel-viewport {
     width: 100%;
     overflow-x: auto;
+    /* allow vertical overflow so titles/meta that extend above the card are visible
+       instead of being clipped by the viewport. Horizontal scrolling remains enabled. */
     overflow-y: hidden;
     position: relative;
     scroll-snap-type: x mandatory;
@@ -80,7 +80,11 @@
     /* center carousel contents vertically when viewport height increases */
     display: flex;
     align-items: center;
-    height: 100%;
+    /* allow the viewport to size naturally rather than forcing 100% height
+       so absolute-positioned parts of cards can be visible within the surrounding layout */
+    height: auto;
+    /* reduce large bottom padding that previously pushed cards upward on small screens */
+    padding: 4rem 0 6rem;
 }
 
 .smartteen-carousel-viewport::-webkit-scrollbar,
@@ -95,6 +99,8 @@
     align-items: center;
     width: max-content;
     will-change: transform;
+    /* ensure consistent spacing between card boxes */
+    gap: 1.25rem;
 }
 
 .smartteen-carousel-footer {
@@ -124,33 +130,43 @@
 }
 
 .smartteen-card {
+    /* cover and box sizing */
+    --cover-size: clamp(260px, 30vw, 460px);
+    --card-base-width: clamp(180px, 22vw, 300px);
+    /* visual scales */
+    --active-scale: 1.05;
+    --nonactive-scale: 0.85;
+    /* reserve the box width to the active visual width so spacing between boxes is identical */
+    --card-box-width: calc(var(--card-base-width) * var(--active-scale));
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    /* ensure children (cover) align to the top and fill width */
     justify-content: flex-start;
-    width: clamp(180px, 22vw, 300px);
+    /* All cards use the same box width so layout spacing between boxes is consistent */
+    width: var(--card-box-width);
     min-width: 0;
     height: auto;
     cursor: pointer;
     position: relative;
     overflow: visible;
-    transform: scale(0.6);
-    /* non-active are 40% smaller */
-    transition: transform 0.28s cubic-bezier(.2, .9, .2, 1), box-shadow 0.28s ease, opacity 0.22s ease;
-    /* Give cards a consistent minimum height so images stay aligned even when titles/intros differ in length */
-    min-height: 420px;
+    /* keep container stable; visual scaling occurs inside the cover element */
+    transition: box-shadow 0.28s ease, opacity 0.22s ease, transform 0.22s ease;
+    /* Keep enough room to show title above and intro below the centered cover */
+    min-height: calc(var(--cover-size) + 8rem);
     scroll-snap-align: center;
-    gap: 2rem;
+    transform: scale(0.6);
+    pointer-events: none;
 }
 
 /* Active (center) card is 30% larger than non-active (0.6 * 1.3 = 0.78) */
 .smartteen-card.active,
 .smartteen-card:focus {
-    transform: scale(0.78);
+    /* visually emphasize active card without changing box width */
+    transform: translateY(-6px);
     opacity: 1;
     z-index: 5;
+    pointer-events: auto;
 }
 
 /* dim non-active cards */
@@ -159,18 +175,23 @@
 }
 
 .smartteen-card__title {
-    margin: 0 0 0.5rem 0;
+    /* positioned above the centered cover; when height grows it expands upward */
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: calc(50% + (var(--cover-size) / 2) + 0.25rem);
+    margin: 0;
     font-size: 1rem;
     font-weight: 700;
     color: #ffffff;
     text-align: center;
     line-height: 1.2;
-    width: 100%;
     box-sizing: border-box;
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(6px);
     transition: opacity 0.22s ease, transform 0.22s ease;
     pointer-events: none;
+    z-index: 3;
 }
 
 .smartteen-card.active .smartteen-card__title,
@@ -181,50 +202,71 @@
 }
 
 .smartteen-card__cover {
-    width: 100%;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.02);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-    /* make cover a larger responsive area so important image patterns remain visible */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* responsive cover height: minimum 300px, scales with viewport, max 600px */
-    flex: 0 0 clamp(300px, 36vw, 600px);
+    width: calc(100%);
+    overflow: visible;
+    /* allow scaled cover to overflow without clipping */
+    /* absolutely center the cover inside the card so image doesn't move when text changes */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+    height: var(--cover-size);
+    max-width: 100%;
+    box-sizing: border-box;
+    z-index: 2;
+    /* prepare for inner scaling */
+    transform-origin: center;
 }
 
-/* Images use contain so the full artwork/pattern is visible */
+/* Images use contain so the full artwork/pattern is visible and remains centered */
 .smartteen-card__cover img {
-    width: 100%;
+    /* Keep full artwork visible but make visual sizes consistent across different aspect ratios
+       We'll scale the image so non-active appears smaller while the card box width stays the same.
+       Default image scale is adjusted relative to the reserved box (nonactive / active).
+    */
+    width: auto;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
-    /* ensure entire image is visible (no cropping) */
     object-position: center;
     display: block;
+    margin: 0 auto;
+    transform-origin: center;
+    transition: transform 0.28s cubic-bezier(.2, .9, .2, 1);
+    /* scale to produce non-active visual size inside the reserved box */
+    --_cover-default-scale: calc(var(--nonactive-scale) / var(--active-scale));
+    transform: scale(var(--_cover-default-scale));
 }
 
-/* Active card scales via transform; keep same baseline flex-basis so transform enlarges visually */
+/* Active card's cover scales up to fill the reserved box (visual emphasis) */
+.smartteen-card.active .smartteen-card__cover img,
+.smartteen-card:focus .smartteen-card__cover img {
+    transform: scale(1);
+}
+
+/* Active card scales via transform; cover is absolute so will scale with the card */
 .smartteen-card.active .smartteen-card__cover,
 .smartteen-card:focus .smartteen-card__cover {
-    flex-basis: clamp(300px, 36vw, 600px);
+    height: var(--cover-size);
 }
 
-/* Mobile override in the existing media query will reduce this size (see below) */
 
 .smartteen-card__meta {
-    text-align: center;
-    width: 100%;
+    /* positioned below the centered cover; grows downward when intro is long */
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    top: calc(50% + (var(--cover-size) / 2) + 0.25rem);
+    text-align: left;
     box-sizing: border-box;
     opacity: 0;
     transition: opacity 0.22s ease, transform 0.22s ease;
     pointer-events: none;
-    /* don't let meta content push the cover on non-active cards */
-    height: 0;
-    overflow: hidden;
+    z-index: 3;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    gap: 0.75rem;
 }
 
 .smartteen-card.active .smartteen-card__meta,
@@ -232,10 +274,8 @@
     opacity: 1;
     transform: none;
     pointer-events: auto;
-    height: auto;
-    overflow: visible;
-    flex: 1 1 auto;
 }
+
 
 .smartteen-card__intro {
     font-size: 0.9rem;
@@ -243,7 +283,7 @@
     color: rgba(255, 255, 255, 0.9);
     max-height: 10rem;
     overflow: hidden;
-    margin-bottom: 2rem;
+    padding: 1rem 1rem 1rem 1rem;
 }
 
 .smartteen-card__read-btn {
@@ -346,10 +386,9 @@
 .smartteen-overlay__content {
     position: relative;
     padding: 4rem 3rem 2rem;
-    color: #f3f4ff;
-    display: grid;
+    /*display: grid;
     grid-template-columns: 1.1fr 1fr;
-    gap: 2rem;
+    gap: 2rem;*/
 }
 
 .smartteen-overlay__book-meta {
@@ -462,36 +501,107 @@
 
 @media (max-width: 720px) {
     .revamppage-smartteen {
-        padding: 2rem 0 3rem;
+        padding: 2rem 0 2.5rem;
     }
 
+    .smartteen-carousel-section {
+        padding: 1rem 1rem;
+        height: 28rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Make the carousel horizontal with nav buttons on mobile and ensure the active card is prominent */
     .smartteen-carousel-wrapper {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
     }
 
-    .smartteen-carousel__nav {
-        width: 2.75rem;
-        height: 2.75rem;
+    .smartteen-carousel-viewport {
+        margin: auto;
+        height: 100%;
+        padding: 0;
+    }
+
+    .smartteen-card__title {
+        /* show title on mobile and make it readable */
+        position: relative;
+        opacity: 0;
+        pointer-events: auto;
+        top: 0;
+        left: 0;
+        font-size: 1rem;
+        text-align: center;
+        margin: 0.5rem 0 0.25rem;
     }
 
     .smartteen-card {
-        width: 72vw;
+        /* Make the card big on mobile so the cover, title and intro are readable */
+        --card-base-width: 86vw;
+        --cover-size: 60vw;
         min-width: auto;
-        /* reduce min-height on narrow screens to avoid overly tall cards */
         min-height: auto;
         align-items: stretch;
-        /* keep cover aligned */
+        /* remove global shrink so text remains legible */
+        transform: none;
+        /* ensure a predictable mobile width (don't rely on --active-scale being set) */
+        width: var(--card-base-width);
     }
 
-    /* smaller cover height on mobile so layout isn't too tall */
-    .smartteen-card__cover {
-        flex: 0 0 50vw;
-        /* cover ~50% of viewport width as height on small screens */
+    /* Keep non-active cards visible and interactive on small screens so users can tap Read */
+    .smartteen-card:not(.active) {
+        opacity: 0.9;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    /* Ensure active card shows title and meta and sits above neighbors (still keep emphasis) */
+    .smartteen-card.active,
+    .smartteen-card:focus {
+        transform: translateY(-6px) scale(1);
+        z-index: 6;
+        opacity: 1;
+    }
+
+    /* Make meta flow under the cover rather than being absolutely positioned so content isn't clipped */
+    .smartteen-card__meta {
+        position: relative;
+        left: auto;
+        right: auto;
+        top: auto;
+        opacity: 0;
+        transform: none;
+        pointer-events: auto;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem 1rem 1rem;
+    }
+
+    .smartteen-card__intro {
+        max-height: none;
+        overflow: visible;
+        font-size: 0.95rem;
+    }
+
+    .smartteen-card__read-btn {
+        display: inline-block;
+        /* slightly larger touch target on mobile */
+        padding: 0.6rem 1rem;
+    }
+
+    .smartteen-card__meta {
+        top: calc(50% + (var(--cover-size) / 2) + 0.5rem);
+    }
+
+    .smartteen-card__intro {
+        font-size: 0.95rem;
+        max-height: 10rem;
+        overflow-y: hidden;
     }
 
     .smartteen-card__cover img {
         object-fit: contain;
-        /* avoid cropping important patterns on mobile */
         height: 100%;
     }
 
@@ -503,5 +613,31 @@
 
     .smartteen-overlay__content {
         padding: 2rem 1.25rem 1.5rem;
+    }
+
+    /* PDF overlay sizing: make iframe fill most of viewport and fit responsively */
+    .smartteen-overlay__pdf-wrap {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .smartteen-overlay__pdf-wrap iframe {
+        width: 100%;
+        height: calc(100vh - 180px);
+        max-height: 88vh;
+        border: none;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .smartteen-overlay__pdf-link a {
+        display: inline-block;
+        color: #fff;
+        text-decoration: underline;
+    }
+
+    .smartteen-overlay__pdf-fallback {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.85);
     }
 }

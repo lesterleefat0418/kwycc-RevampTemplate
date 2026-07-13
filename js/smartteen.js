@@ -12,13 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnNext = document.querySelector('.smartteen-carousel__next');
     var overlay = document.getElementById('smartteenOverlay');
     var overlayClose = overlay ? overlay.querySelector('.smartteen-overlay__close') : null;
-    var overlayBookCoverContainer = overlay ? overlay.querySelector('.smartteen-overlay__book-cover') : null;
-    var overlayBookTitle = overlay ? overlay.querySelector('.smartteen-overlay__book-title') : null;
-    var overlayBookIntro = overlay ? overlay.querySelector('.smartteen-overlay__book-intro') : null;
-    var overlayPagePrev = overlay ? overlay.querySelector('.smartteen-overlay__page-prev') : null;
-    var overlayPageNext = overlay ? overlay.querySelector('.smartteen-overlay__page-next') : null;
-    var overlayPageIndicator = overlay ? overlay.querySelector('.smartteen-overlay__page-indicator') : null;
-    var overlayPageViewer = overlay ? overlay.querySelector('.smartteen-overlay__book-page') : null;
+    var overlayPdfIframe = overlay ? overlay.querySelector('#smartteenOverlayPdf') : null;
+    var overlayPdfLink = overlay ? overlay.querySelector('.smartteen-overlay__pdf-link a') : null;
+    var overlayPageViewer = overlay ? overlay.querySelector('.smartteen-overlay__book-page') : null; // kept for backwards compatibility if present
 
     var cards = originals.slice();
     var currentIndex = 0;
@@ -28,6 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var resizeTimer = null;
     var scrollEndTimer = null;
     var rafId = null;
+    var isSnapping = false; // true while smooth snapping/scrolling to center
+    var overlayPdfFallbackTimer = null; // timer to detect iframe embed failure and fallback
 
     function getCurrentLang() {
         if (document.body && document.body.getAttribute('data-lang')) {
@@ -193,28 +191,125 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openOverlay(book) {
         if (!overlay) return;
+        // Safety guard: ensure the current centered/active card corresponds to the requested book.
+        // This prevents opening the overlay for non-active books if some caller invokes openOverlay directly.
+        try {
+            var activeCard = track.querySelector('.smartteen-card.active');
+            if (activeCard && book && typeof book.id !== 'undefined') {
+                var activeBookData = activeCard.getAttribute('data-book');
+                if (activeBookData) {
+                    var parsed = JSON.parse(activeBookData);
+                    if (parsed && parsed.id && parsed.id !== book.id) {
+                        // requested book is not the active card - refuse to open
+                        return;
+                    }
+                }
+            } else if (!activeCard) {
+                // no active card found - ensure the closest card matches the requested book
+                var closest = findClosestCard();
+                if (closest) {
+                    var closestData = closest.getAttribute('data-book');
+                    if (closestData) {
+                        var parsedClosest = JSON.parse(closestData);
+                        if (parsedClosest && parsedClosest.id && parsedClosest.id !== book.id) {
+                            return;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            // parsing error - fail closed
+            return;
+        }
+
         activeBook = book;
         activePage = 0;
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('smartteen-overlay-open');
 
-        if (overlayBookCoverContainer) {
-            if (book.cover_html) {
-                overlayBookCoverContainer.innerHTML = book.cover_html;
-                var newImg = overlayBookCoverContainer.querySelector('img');
-                if (newImg) newImg.alt = book.title || '';
+        // If a PDF url is provided, show it in the iframe and link; otherwise show a simple fallback message
+        if (overlayPdfIframe && book.pdf) {
+            // try embedding the PDF directly
+            try { overlayPdfIframe.src = book.pdf; } catch (e) { overlayPdfIframe.src = '' }
+            if (overlayPdfLink) {
+                overlayPdfLink.href = book.pdf;
+                overlayPdfLink.textContent = 'Open PDF in new tab';
+                overlayPdfLink.style.display = '';
+            }
+            // clear previous fallback message
+            var fallbackMsgEl = overlay ? overlay.querySelector('.smartteen-overlay__pdf-fallback') : null;
+            if (fallbackMsgEl) { fallbackMsgEl.style.display = 'none'; fallbackMsgEl.textContent = ''; }
+
+            // If running on localhost/private network, don't try Google viewer (Google can't access localhost)
+            var hostname = (location && location.hostname) ? location.hostname : '';
+            var isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || /^192\.168\./.test(hostname) || /^10\./.test(hostname);
+
+            clearTimeout(overlayPdfFallbackTimer);
+            if (isLocalhost) {
+                // For local dev, many viewers can't embed — show link and an advisory message
+                if (fallbackMsgEl) {
+                    //fallbackMsgEl.textContent = 'Local file: preview may be blocked in iframe. Use "Open PDF in new tab" to view.';
+                    fallbackMsgEl.style.display = '';
+                }
             } else {
-                overlayBookCoverContainer.innerHTML = '';
+                // set fallback timer to detect embed failure (e.g., X-Frame-Options) and switch to Google Viewer
+                overlayPdfFallbackTimer = setTimeout(function () {
+                    var usable = false;
+                    try {
+                        // try to access iframe document to ensure content loaded and not blocked
+                        var doc = overlayPdfIframe.contentDocument || (overlayPdfIframe.contentWindow && overlayPdfIframe.contentWindow.document);
+                        if (doc && doc.body && doc.body.children && doc.body.children.length > 0) {
+                            usable = true;
+                        }
+                    } catch (e) {
+                        usable = false;
+                    }
+
+                    if (!usable) {
+                        // fallback to Google Docs viewer
+                        var googleUrl = 'https://docs.google.com/gview?embedded=true&url=' + encodeURIComponent(book.pdf);
+                        try { overlayPdfIframe.src = googleUrl; } catch (e) { overlayPdfIframe.src = '' }
+                        if (overlayPdfLink) {
+                            overlayPdfLink.href = book.pdf;
+                            overlayPdfLink.textContent = 'Open PDF in new tab';
+                            overlayPdfLink.style.display = '';
+                        }
+
+                        // If Google viewer still doesn't render (we can't reliably detect cross-origin), show advisory message after a short delay
+                        setTimeout(function () {
+                            try {
+                                var doc2 = overlayPdfIframe.contentDocument || (overlayPdfIframe.contentWindow && overlayPdfIframe.contentWindow.document);
+                                if (!doc2 || !doc2.body || !(doc2.body.children && doc2.body.children.length > 0)) {
+                                    if (fallbackMsgEl) {
+                                        fallbackMsgEl.textContent = 'Preview not available. Use "Open PDF in new tab" to view the file.';
+                                        fallbackMsgEl.style.display = '';
+                                    }
+                                }
+                            } catch (e) {
+                                if (fallbackMsgEl) {
+                                    fallbackMsgEl.textContent = 'Preview not available. Use "Open PDF in new tab" to view the file.';
+                                    fallbackMsgEl.style.display = '';
+                                }
+                            }
+                        }, 900);
+                    }
+                }, 900);
+            }
+
+        } else {
+            if (overlayPdfIframe) overlayPdfIframe.src = '';
+            if (overlayPdfLink) {
+                overlayPdfLink.href = '#';
+                overlayPdfLink.textContent = 'No PDF available';
+                overlayPdfLink.style.display = 'none';
+            }
+            // fallback: if overlayPageViewer exists, show intro text
+            if (overlayPageViewer && book.intro) {
+                overlayPageViewer.innerHTML = '<div class="smartteen-overlay__book-page-text">' + book.intro + '</div>';
             }
         }
-        if (overlayBookTitle) {
-            overlayBookTitle.textContent = book.title || '';
-        }
-        if (overlayBookIntro) {
-            overlayBookIntro.innerHTML = book.intro || '';
-        }
-        setOverlayPage(activePage);
+
         try { overlayClose && overlayClose.focus(); } catch (e) { }
     }
 
@@ -223,12 +318,18 @@ document.addEventListener('DOMContentLoaded', function () {
         overlay.classList.remove('open');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('smartteen-overlay-open');
+        // clear iframe src to stop loading/playing and free memory
+        if (overlayPdfIframe) overlayPdfIframe.src = '';
+        // clear fallback timer
+        clearTimeout(overlayPdfFallbackTimer);
+        overlayPdfFallbackTimer = null;
         activeBook = null;
         activePage = 0;
     }
 
     function setOverlayPage(index) {
-        if (!overlayPageViewer || !overlayPageIndicator || !activeBook) return;
+        // retained for compatibility but not used when PDF preview is enabled
+        if (!overlayPageViewer || !activeBook) return;
         var pages = activeBook.pages || [];
         var pageCount = pages.length || 1;
         activePage = ((index % pageCount) + pageCount) % pageCount;
@@ -244,7 +345,6 @@ document.addEventListener('DOMContentLoaded', function () {
             html += '<img src="' + escapeHtml(pageData.image) + '" alt="">';
         }
         overlayPageViewer.innerHTML = html;
-        overlayPageIndicator.textContent = 'Page ' + (activePage + 1) + ' / ' + pageCount;
     }
 
     function escapeHtml(value) {
@@ -256,27 +356,87 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, '&#039;');
     }
 
+    function isCardCentered(card) {
+        if (!card || !viewport) return false;
+        var rect = card.getBoundingClientRect();
+        var center = rect.left + rect.width / 2;
+        var wrapRect = viewport.getBoundingClientRect();
+        var wrapCenter = wrapRect.left + wrapRect.width / 2;
+        var dist = Math.abs(center - wrapCenter);
+        var tolerance = Math.max(8, Math.round(wrapRect.width * 0.06)); // 6% tolerance
+        return dist <= tolerance;
+    }
+
     function attachCardEvents() {
         refreshCardList();
         cards.forEach(function (card) {
+            // Skip if we've already attached handlers
             if (card.dataset.smartteenAttached === '1') {
                 return;
             }
-            card.addEventListener('click', function () {
+
+            // Skip cloned elements used for infinite looping
+            if (card.getAttribute('data-clone') || card.dataset.clone) {
+                return;
+            }
+
+            // Skip elements that are not visible in layout (display:none or detached)
+            if (card.getClientRects().length === 0) {
+                return;
+            }
+
+            function handleOpenIntent(evt, book) {
+                if (isSnapping) {
+                    if (evt && evt.preventDefault) evt.preventDefault();
+                    return;
+                }
+                // If card is centered enough, open overlay
+                if (isCardCentered(card)) {
+                    openOverlay(book);
+                    return;
+                }
+                // Otherwise snap to center
+                var left = card.offsetLeft + card.offsetWidth / 2 - viewport.clientWidth / 2;
+                isSnapping = true;
+                viewport.scrollTo({ left: left, behavior: 'smooth' });
+                clearTimeout(scrollEndTimer);
+                scrollEndTimer = setTimeout(function () {
+                    updateActiveState();
+                    isSnapping = false;
+                }, 420);
+            }
+
+            card.addEventListener('click', function (evt) {
                 var bookData = card.getAttribute('data-book');
                 if (!bookData) return;
                 try {
-                    openOverlay(JSON.parse(bookData));
+                    var book = JSON.parse(bookData);
                 } catch (e) {
-                    // ignore malformed data
+                    return;
                 }
+                handleOpenIntent(evt, book);
             });
+
+            // ensure the Read button follows the same rules (avoid accidental overlay opens via bubbling)
+            var readBtn = card.querySelector('[data-open-overlay], .smartteen-card__read-btn');
+            if (readBtn) {
+                readBtn.addEventListener('click', function (evt) {
+                    var bookData = card.getAttribute('data-book');
+                    if (!bookData) return;
+                    try { var book = JSON.parse(bookData); } catch (e) { return; }
+                    // prevent bubbling to card click which may behave differently
+                    evt.stopPropagation();
+                    handleOpenIntent(evt, book);
+                });
+            }
+
             card.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     card.click();
                 }
             });
+
             card.dataset.smartteenAttached = '1';
         });
     }
@@ -327,20 +487,6 @@ document.addEventListener('DOMContentLoaded', function () {
         overlayClose.addEventListener('click', closeOverlay);
     }
 
-    if (overlayPagePrev) {
-        overlayPagePrev.addEventListener('click', function () {
-            if (!activeBook) return;
-            setOverlayPage(activePage - 1);
-        });
-    }
-
-    if (overlayPageNext) {
-        overlayPageNext.addEventListener('click', function () {
-            if (!activeBook) return;
-            setOverlayPage(activePage + 1);
-        });
-    }
-
     if (overlay) {
         overlay.addEventListener('click', function (event) {
             if (event.target === overlay) {
@@ -357,6 +503,8 @@ document.addEventListener('DOMContentLoaded', function () {
             closeOverlay();
             return;
         }
+        // If overlay is showing a PDF, ignore arrow keys for page navigation
+        if (overlayPdfIframe && activeBook && activeBook.pdf) return;
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
             setOverlayPage(activePage - 1);

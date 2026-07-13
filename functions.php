@@ -286,6 +286,7 @@ function revamppage_smartteen_meta_box_callback($post)
 
     $intro = get_post_meta($post->ID, '_smartteen_intro', true);
     $pages = get_post_meta($post->ID, '_smartteen_pages', true);
+    $pdf_url = get_post_meta($post->ID, '_smartteen_pdf', true);
     if (!is_array($pages)) {
         $pages = array();
     }
@@ -315,6 +316,14 @@ function revamppage_smartteen_meta_box_callback($post)
                 <?php esc_html_e('Introduction', 'revamppage'); ?>
             </label>
             <textarea id="smartteen_intro" name="smartteen_intro" rows="4" style="width:100%; padding:8px; font-size:14px;"><?php echo esc_textarea($intro); ?></textarea>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+            <label for="smartteen_pdf_url" style="display:block; font-weight:700; margin-bottom:6px;">
+                <?php esc_html_e('PDF URL (optional) - previewed in overlay', 'revamppage'); ?>
+            </label>
+            <input type="url" id="smartteen_pdf_url" name="smartteen_pdf_url" value="<?php echo esc_attr($pdf_url); ?>" style="width:100%; padding:8px;" placeholder="https://example.com/book.pdf">
+            <p style="margin-top:8px; color:#666;"><?php esc_html_e('Provide a direct PDF URL to allow users to preview the book in the overlay.', 'revamppage'); ?></p>
         </div>
 
         <div id="revamppage-smartteen-pages">
@@ -493,7 +502,18 @@ function revamppage_save_smartteen_meta($post_id)
     } else {
         delete_post_meta($post_id, '_smartteen_thumb_id');
     }
+
+    // Save optional PDF URL for overlay preview
+    if (isset($_POST['smartteen_pdf_url'])) {
+        $pdf = trim($_POST['smartteen_pdf_url']);
+        if ($pdf !== '') {
+            update_post_meta($post_id, '_smartteen_pdf', esc_url_raw($pdf));
+        } else {
+            delete_post_meta($post_id, '_smartteen_pdf');
+        }
+    }
 }
+
 
 add_action('save_post', 'revamppage_save_smartteen_meta');
 

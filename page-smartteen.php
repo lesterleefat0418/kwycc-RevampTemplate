@@ -70,20 +70,21 @@ if (have_posts()):
                                     'cover_html' => wp_kses_post($cover_html),
                                     'intro' => wp_kses_post($intro),
                                     'pages' => array_values($pages),
-                                );
-                                ?>
-                                <div class="smartteen-card" data-index="<?php echo esc_attr($index); ?>" data-book="<?php echo esc_attr(wp_json_encode($book_data)); ?>" role="button" tabindex="0">
-                                    <div class="smartteen-card__title" aria-hidden="true"><?php echo esc_html($book_title); ?></div>
-                                    <div class="smartteen-card__cover">
-                                        <?php echo $cover_html; ?>
+                                        'pdf' => esc_url(get_post_meta($book_id, '_smartteen_pdf', true)),
+                                    );
+                                    ?>
+                                    <div class="smartteen-card" data-index="<?php echo esc_attr($index); ?>" data-book="<?php echo esc_attr(wp_json_encode($book_data)); ?>" role="button" tabindex="0">
+                                        <div class="smartteen-card__title" aria-hidden="true"><?php echo esc_html($book_title); ?></div>
+                                        <div class="smartteen-card__cover">
+                                            <?php echo $cover_html; ?>
+                                        </div>
+                                        <div class="smartteen-card__meta" aria-hidden="true">
+                                            <div class="smartteen-card__intro"><?php echo wp_kses_post($intro); ?></div>
+                                            <button type="button" class="smartteen-card__read-btn" data-open-overlay><?php echo esc_html__('閱讀', 'revamppage'); ?></button>
+                                        </div>
                                     </div>
-                                    <div class="smartteen-card__meta" aria-hidden="true">
-                                        <div class="smartteen-card__intro"><?php echo wp_kses_post($intro); ?></div>
-                                        <button type="button" class="smartteen-card__read-btn" data-open-overlay><?php echo esc_html__('閱讀', 'revamppage'); ?></button>
-                                    </div>
-                                </div>
-                                <?php
-                                $index++;
+                                    <?php
+                                    $index++;
                             endwhile;
                             wp_reset_postdata();
                             ?>
@@ -120,22 +121,10 @@ if (have_posts()):
                 </div>
 
                 <div class="smartteen-overlay__content">
-                    <div class="smartteen-overlay__book-meta">
-                        <div class="smartteen-overlay__book-cover">
-                            <img src="" alt="">
-                        </div>
-                        <div class="smartteen-overlay__book-info">
-                            <h3 class="smartteen-overlay__book-title"></h3>
-                            <div class="smartteen-overlay__book-intro"></div>
-                        </div>
-                    </div>
-                    <div class="smartteen-overlay__page-controls">
-                        <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-prev" aria-label="Previous page">‹</button>
-                        <div class="smartteen-overlay__page-indicator"></div>
-                        <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-next" aria-label="Next page">›</button>
-                    </div>
-                    <div class="smartteen-overlay__page-viewer">
-                        <div class="smartteen-overlay__book-page" aria-live="polite"></div>
+                    <div class="smartteen-overlay__pdf-wrap">
+                        <iframe id="smartteenOverlayPdf" src="" frameborder="0" style="width:100%; height:70vh; border-radius:8px;"></iframe>
+                        <div class="smartteen-overlay__pdf-link" style="margin-top:8px; text-align:center;"><a href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a></div>
+                        <div class="smartteen-overlay__pdf-fallback" style="margin-top:8px; text-align:center; display:none; color:#ddd;"></div>
                     </div>
                 </div>
             </div>
