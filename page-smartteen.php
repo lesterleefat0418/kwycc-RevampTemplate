@@ -122,7 +122,18 @@ if (have_posts()):
 
                 <div class="smartteen-overlay__content">
                     <div class="smartteen-overlay__pdf-wrap">
-                        <iframe id="smartteenOverlayPdf" src="" frameborder="0" style="width:100%; height:70vh; border-radius:8px;"></iframe>
+                        <!-- PDF.js viewer container (preferred) -->
+                        <div class="smartteen-overlay__book-page" aria-live="polite"></div>
+
+                        <!-- page controls (prev / indicator / next) -->
+                        <div class="smartteen-overlay__page-controls" style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:1rem;">
+                            <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--prev" aria-label="Previous page">‹</button>
+                            <div class="smartteen-overlay__page-indicator">&nbsp;</div>
+                            <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--next" aria-label="Next page">›</button>
+                        </div>
+
+                        <!-- iframe kept as fallback for servers where embedding works -->
+                        <iframe id="smartteenOverlayPdf" src="" frameborder="0" style="width:100%; height:70vh; border-radius:8px; display:none;"></iframe>
                         <div class="smartteen-overlay__pdf-link" style="margin-top:8px; text-align:center;"><a href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a></div>
                         <div class="smartteen-overlay__pdf-fallback" style="margin-top:8px; text-align:center; display:none; color:#ddd;"></div>
                     </div>

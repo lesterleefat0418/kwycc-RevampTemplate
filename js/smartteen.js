@@ -27,6 +27,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var isSnapping = false; // true while smooth snapping/scrolling to center
     var overlayPdfFallbackTimer = null; // timer to detect iframe embed failure and fallback
 
+    // PDF.js state
+    var pdfDoc = null; // PDFDocumentProxy
+    var pdfCurrentPage = 1;
+    var pdfPageCount = 0;
+    var pdfRenderingTask = null;
+    var pdfRenderPage = null; // function reference for external controls
+    var pdfPrevBtn = overlay ? overlay.querySelector('.smartteen-overlay__page-nav--prev') : null;
+    var pdfNextBtn = overlay ? overlay.querySelector('.smartteen-overlay__page-nav--next') : null;
+    var pdfIndicator = overlay ? overlay.querySelector('.smartteen-overlay__page-indicator') : null;
     function getCurrentLang() {
         if (document.body && document.body.getAttribute('data-lang')) {
             return document.body.getAttribute('data-lang');
@@ -236,73 +245,175 @@ document.addEventListener('DOMContentLoaded', function () {
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('smartteen-overlay-open');
 
-        // If a PDF url is provided, show it in the iframe and link; otherwise show a simple fallback message
-        if (overlayPdfIframe && book.pdf) {
-            // try embedding the PDF directly
-            try { overlayPdfIframe.src = book.pdf; } catch (e) { overlayPdfIframe.src = '' }
+        // If a PDF url is provided, render it via PDF.js (preferred) into overlayPageViewer; otherwise show a simple fallback message
+        if (book.pdf) {
             if (overlayPdfLink) {
                 overlayPdfLink.href = book.pdf;
                 overlayPdfLink.textContent = 'Open PDF in new tab';
                 overlayPdfLink.style.display = '';
             }
-            // clear previous fallback message
+
             var fallbackMsgEl = overlay ? overlay.querySelector('.smartteen-overlay__pdf-fallback') : null;
             if (fallbackMsgEl) { fallbackMsgEl.style.display = 'none'; fallbackMsgEl.textContent = ''; }
 
-            // If running on localhost/private network, don't try Google viewer (Google can't access localhost)
-            var hostname = (location && location.hostname) ? location.hostname : '';
-            var isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || /^192\.168\./.test(hostname) || /^10\./.test(hostname);
+            // render using PDF.js
+            if (overlayPageViewer) {
+                // clear previous viewer
+                overlayPageViewer.innerHTML = '';
 
-            clearTimeout(overlayPdfFallbackTimer);
-            if (isLocalhost) {
-                // For local dev, many viewers can't embed — show link and an advisory message
-                if (fallbackMsgEl) {
-                    fallbackMsgEl.textContent = 'If preview may be blocked in iframe. Use "Open PDF in new tab" to view.';
-                    fallbackMsgEl.style.display = '';
-                }
-            } else {
-                // set fallback timer to detect embed failure (e.g., X-Frame-Options) and switch to Google Viewer
-                overlayPdfFallbackTimer = setTimeout(function () {
-                    var usable = false;
-                    try {
-                        // try to access iframe document to ensure content loaded and not blocked
-                        var doc = overlayPdfIframe.contentDocument || (overlayPdfIframe.contentWindow && overlayPdfIframe.contentWindow.document);
-                        if (doc && doc.body && doc.body.children && doc.body.children.length > 0) {
-                            usable = true;
-                        }
-                    } catch (e) {
-                        usable = false;
-                    }
-
-                    if (!usable) {
-                        // fallback to Google Docs viewer
-                        var googleUrl = 'https://docs.google.com/gview?embedded=true&url=' + encodeURIComponent(book.pdf);
-                        try { overlayPdfIframe.src = googleUrl; } catch (e) { overlayPdfIframe.src = '' }
-                        if (overlayPdfLink) {
-                            overlayPdfLink.href = book.pdf;
-                            overlayPdfLink.textContent = 'Open PDF in new tab';
-                            overlayPdfLink.style.display = '';
-                        }
-
-                        // If Google viewer still doesn't render (we can't reliably detect cross-origin), show advisory message after a short delay
-                        setTimeout(function () {
-                            try {
-                                var doc2 = overlayPdfIframe.contentDocument || (overlayPdfIframe.contentWindow && overlayPdfIframe.contentWindow.document);
-                                if (!doc2 || !doc2.body || !(doc2.body.children && doc2.body.children.length > 0)) {
-                                    if (fallbackMsgEl) {
-                                        fallbackMsgEl.textContent = 'Preview not available. Use "Open PDF in new tab" to view the file.';
-                                        fallbackMsgEl.style.display = '';
-                                    }
-                                }
-                            } catch (e) {
-                                if (fallbackMsgEl) {
-                                    fallbackMsgEl.textContent = 'Preview not available. Use "Open PDF in new tab" to view the file.';
-                                    fallbackMsgEl.style.display = '';
+                // helper: dynamically load PDF.js from CDN if not present
+                function loadPdfJs(callback) {
+                    if (window.pdfjsLib) return callback(null, window.pdfjsLib);
+                    var script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+                    script.onload = function () {
+                        try {
+                            if (window.pdfjsLib) {
+                                // set workerSrc to CDN
+                                if (window.pdfjsLib.GlobalWorkerOptions) {
+                                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                                 }
                             }
-                        }, 900);
-                    }
-                }, 900);
+                        } catch (e) { /* ignore */ }
+                        callback(null, window.pdfjsLib);
+                    };
+                    script.onerror = function (err) { callback(new Error('Failed to load pdf.js')); };
+                    document.head.appendChild(script);
+                }
+
+                // render PDF with multi-page support using PDF.js
+                function renderPdfUrl(url) {
+                    loadPdfJs(function (err, pdfjsLib) {
+                        if (err) {
+                            if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available (could not load renderer). Use "Open PDF in new tab".'; fallbackMsgEl.style.display = ''; }
+                            return;
+                        }
+
+                        // fetch PDF document
+                        try {
+                            var loadingTask = pdfjsLib.getDocument(url);
+                        } catch (e) {
+                            if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available (failed to start PDF load). Use "Open PDF in new tab".'; fallbackMsgEl.style.display = ''; }
+                            return;
+                        }
+
+                        loadingTask.promise.then(function (pdf) {
+                            // store document and initialize pagination
+                            pdfDoc = pdf;
+                            pdfPageCount = pdf.numPages || 0;
+                            pdfCurrentPage = 1;
+
+                            // helpers
+                            function updatePdfControls() {
+                                if (pdfIndicator) pdfIndicator.textContent = pdfCurrentPage + ' / ' + (pdfPageCount || 1);
+                                if (pdfPrevBtn) pdfPrevBtn.disabled = pdfCurrentPage <= 1;
+                                if (pdfNextBtn) pdfNextBtn.disabled = pdfCurrentPage >= (pdfPageCount || 1);
+                            }
+
+                            function renderSpread(startPage) {
+                                if (!pdfDoc) return;
+                                // normalize to integer
+                                startPage = Math.floor(Number(startPage) || 1);
+                                // clamp to valid range
+                                if (startPage < 1) startPage = 1;
+                                if (startPage > pdfPageCount) startPage = Math.max(1, pdfPageCount - ((pdfPageCount % 2 === 0) ? 1 : 0));
+                                // Maintain left page as startPage; right page is startPage+1
+                                pdfCurrentPage = startPage;
+                                var leftPageNum = startPage;
+                                var rightPageNum = startPage + 1;
+
+                                // prepare layout: two columns
+                                overlayPageViewer.innerHTML = '';
+                                var leftWrap = document.createElement('div');
+                                leftWrap.className = 'pdf-page pdf-page--left';
+                                leftWrap.style.boxSizing = 'border-box';
+                                leftWrap.style.overflow = 'auto';
+                                leftWrap.style.webkitOverflowScrolling = 'touch';
+
+                                var rightWrap = document.createElement('div');
+                                rightWrap.className = 'pdf-page pdf-page--right';
+                                rightWrap.style.boxSizing = 'border-box';
+                                rightWrap.style.overflow = 'auto';
+                                rightWrap.style.webkitOverflowScrolling = 'touch';
+
+                                overlayPageViewer.appendChild(leftWrap);
+                                overlayPageViewer.appendChild(rightWrap);
+
+                                function renderOne(pageNum, wrapEl) {
+                                    if (!pageNum || pageNum < 1 || pageNum > pdfPageCount) {
+                                        // empty page placeholder
+                                        wrapEl.innerHTML = '<div style="color:#ddd; text-align:center; padding:2rem;">&nbsp;</div>';
+                                        return Promise.resolve();
+                                    }
+                                    return pdfDoc.getPage(pageNum).then(function (page) {
+                                        var wrapWidth = Math.floor((overlayPageViewer.clientWidth - 12) / 2) || overlayPageViewer.clientWidth / 2 || 400; // subtract small gap
+                                        var viewportForScale = page.getViewport({ scale: 1 });
+                                        var scale = (wrapWidth / viewportForScale.width) * 1.0;
+                                        var viewport = page.getViewport({ scale: scale });
+
+                                        var canvas = document.createElement('canvas');
+                                        canvas.className = 'smartteen-pdf-canvas';
+                                        var ctx = canvas.getContext('2d');
+                                        canvas.width = Math.floor(viewport.width);
+                                        canvas.height = Math.floor(viewport.height);
+                                        canvas.style.display = 'block';
+                                        canvas.style.width = '100%';
+                                        canvas.style.height = 'auto';
+
+                                        wrapEl.innerHTML = '';
+                                        wrapEl.appendChild(canvas);
+
+                                        var renderContext = { canvasContext: ctx, viewport: viewport };
+                                        pdfRenderingTask = page.render(renderContext);
+                                        return pdfRenderingTask.promise;
+                                    });
+                                }
+
+                                // render both pages in parallel
+                                var leftPromise = renderOne(leftPageNum, leftWrap);
+                                var rightPromise = renderOne(rightPageNum, rightWrap);
+
+                                return Promise.all([leftPromise, rightPromise]).then(function () {
+                                    // update controls
+                                    if (pdfIndicator) {
+                                        var rightLabel = (rightPageNum <= pdfPageCount) ? rightPageNum : pdfPageCount;
+                                        pdfIndicator.textContent = leftPageNum + '–' + rightLabel + ' / ' + (pdfPageCount || 1);
+                                    }
+                                    if (pdfPrevBtn) pdfPrevBtn.disabled = leftPageNum <= 1;
+                                    if (pdfNextBtn) pdfNextBtn.disabled = rightPageNum >= pdfPageCount;
+                                }).catch(function (err) {
+                                    if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available (render failed). Use "Open PDF in new tab".'; fallbackMsgEl.style.display = ''; }
+                                });
+                            }
+
+                            // attach prev/next handlers once (advance by 2 pages for a spread)
+                            if (pdfPrevBtn && !pdfPrevBtn.dataset.revAttached) {
+                                pdfPrevBtn.addEventListener('click', function () { renderSpread(pdfCurrentPage - 2); });
+                                pdfPrevBtn.dataset.revAttached = '1';
+                            }
+                            if (pdfNextBtn && !pdfNextBtn.dataset.revAttached) {
+                                pdfNextBtn.addEventListener('click', function () { renderSpread(pdfCurrentPage + 2); });
+                                pdfNextBtn.dataset.revAttached = '1';
+                            }
+
+                            // expose renderSpread to outer scope so keyboard handlers can use it
+                            pdfRenderPage = renderSpread;
+
+                            // initial render as a spread (left=1, right=2)
+                            renderSpread(1);
+
+                        }).catch(function (err) {
+                            if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available. Use "Open PDF in new tab" to view the file.'; fallbackMsgEl.style.display = ''; }
+                        });
+                    });
+                }
+
+                renderPdfUrl(book.pdf);
+
+            } else if (overlayPdfIframe) {
+                // fallback to iframe behavior when overlayPageViewer is not present
+                try { overlayPdfIframe.src = book.pdf; } catch (e) { overlayPdfIframe.src = '' }
+                if (fallbackMsgEl) { fallbackMsgEl.textContent = 'If preview may be blocked in iframe. Use "Open PDF in new tab" to view.'; fallbackMsgEl.style.display = ''; }
             }
 
         } else {
@@ -328,6 +439,18 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.remove('smartteen-overlay-open');
         // clear iframe src to stop loading/playing and free memory
         if (overlayPdfIframe) overlayPdfIframe.src = '';
+        // clear PDF.js viewer content and state
+        if (overlayPageViewer) {
+            overlayPageViewer.innerHTML = '';
+        }
+        if (pdfRenderingTask && pdfRenderingTask.cancel) {
+            try { pdfRenderingTask.cancel(); } catch (e) { }
+        }
+        pdfRenderingTask = null;
+        pdfDoc = null;
+        pdfRenderPage = null;
+        pdfPageCount = 0;
+        pdfCurrentPage = 1;
         // clear fallback timer
         clearTimeout(overlayPdfFallbackTimer);
         overlayPdfFallbackTimer = null;
@@ -492,8 +615,25 @@ document.addEventListener('DOMContentLoaded', function () {
             closeOverlay();
             return;
         }
-        // If overlay is showing a PDF, ignore arrow keys for page navigation
-        if (overlayPdfIframe && activeBook && activeBook.pdf) return;
+
+        // If a PDF is rendered via PDF.js, use arrow keys to navigate pages
+        if (pdfDoc && pdfRenderPage) {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                // step backward by a two-page spread
+                pdfRenderPage(pdfCurrentPage - 2);
+                return;
+            }
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                // step forward by a two-page spread
+                pdfRenderPage(pdfCurrentPage + 2);
+                return;
+            }
+            return;
+        }
+
+        // fallback behavior for non-PDF overlays: use existing page logic
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
             setOverlayPage(activePage - 1);

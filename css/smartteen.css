@@ -179,7 +179,7 @@
     position: absolute;
     left: 1rem;
     right: 1rem;
-    bottom: calc(50% + (var(--cover-size) / 2) + 0.25rem);
+    bottom: calc(50% + (var(--cover-size) / 2) + 1rem);
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
@@ -335,9 +335,8 @@
 
 .smartteen-overlay__inner {
     position: relative;
-    max-width: 1200px;
-    width: min(100%, 1100px);
-    max-height: 92vh;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     background: rgba(16, 22, 54, 0.98);
     border-radius: 28px;
@@ -386,9 +385,8 @@
 .smartteen-overlay__content {
     position: relative;
     padding: 4rem 3rem 2rem;
-    /*display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 2rem;*/
+    width: 50%;
+    margin: auto;
 }
 
 .smartteen-overlay__book-meta {
@@ -436,9 +434,11 @@
 .smartteen-overlay__page-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    flex-direction: row;
+    width: 50%;
     gap: 1rem;
-    margin-top: 1rem;
+    margin: 1rem auto;
 }
 
 .smartteen-overlay__page-nav {
@@ -465,14 +465,28 @@
 }
 
 .smartteen-overlay__book-page {
-    min-height: 34rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 28px;
-    padding: 2rem;
-    overflow-y: auto;
+    background: rgb(195 193 193 / 95%);
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    pointer-events: auto;
     color: rgba(255, 255, 255, 0.95);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    display: flex;
+}
+
+/* spread columns */
+.smartteen-overlay__book-page .pdf-page {
+    width: 50%;
+    box-sizing: border-box;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.smartteen-overlay__book-page .pdf-page--left,
+.smartteen-overlay__book-page .pdf-page--right {
+    background: transparent;
 }
 
 .smartteen-overlay__book-page img {
@@ -480,6 +494,23 @@
     display: block;
     margin: 1rem auto;
     border-radius: 18px;
+}
+
+.smartteen-pdf-canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    margin: 0 auto;
+    pointer-events: auto;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+
+}
+
+/* ensure PDF viewer container allows touch pan/scroll */
+.smartteen-overlay__book-page .pdfjsViewer {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .smartteen-overlay__book-page h4 {
@@ -498,6 +529,20 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 720px) {
+
+    /* On narrow screens show single page stacked rather than two-column spread */
+    .smartteen-overlay__book-page {
+        flex-direction: row;
+        margin: 0 auto;
+    }
+
+    .smartteen-overlay__book-page .pdf-page {
+        width: 100%;
+    }
+}
+
 
 @media (max-width: 720px) {
     .revamppage-smartteen {
@@ -612,7 +657,10 @@
     }
 
     .smartteen-overlay__content {
-        padding: 2rem 1.25rem 1.5rem;
+        position: relative;
+        padding: 20rem 20rem 0rem 0rem;
+        width: 100%;
+        margin: auto;
     }
 
     /* PDF overlay sizing: make iframe fill most of viewport and fit responsively */
@@ -620,6 +668,24 @@
         width: 100%;
         box-sizing: border-box;
     }
+
+    /* default canvas style (overridden inside spread columns) */
+    .smartteen-pdf-canvas {
+        display: block;
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100%;
+        margin: 0 auto;
+        pointer-events: auto;
+        /* allow touch interactions */
+    }
+
+    /* ensure canvas inside two-column spread fits its column */
+    .smartteen-overlay__book-page .pdf-page .smartteen-pdf-canvas {
+        width: 100% !important;
+        height: auto !important;
+    }
+
 
     .smartteen-overlay__pdf-wrap iframe {
         width: 100%;
