@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var overlayPdfIframe = overlay ? overlay.querySelector('#smartteenOverlayPdf') : null;
     var overlayPdfLink = overlay ? overlay.querySelector('.smartteen-overlay__pdf-link a') : null;
     var overlayPageViewer = overlay ? overlay.querySelector('.smartteen-overlay__book-page') : null; // kept for backwards compatibility if present
+    var sectionTitle = document.querySelector('#revamppage-smartteen .section-title');
+    var sectionTitleCn = sectionTitle ? sectionTitle.querySelector('.smartteen-cn') : null;
+    var sectionTitleEng = sectionTitle ? sectionTitle.querySelector('.smartteen-eng') : null;
+    var originalSectionTitleCn = sectionTitleCn ? sectionTitleCn.textContent : '';
+    var originalSectionTitleEng = sectionTitleEng ? sectionTitleEng.textContent : '';
 
     var cards = originals.slice();
     var currentIndex = 0;
@@ -241,6 +246,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         activeBook = book;
         activePage = 0;
+        if (sectionTitleCn) {
+            sectionTitleCn.textContent = book.title || originalSectionTitleCn;
+        }
+        if (sectionTitleEng) {
+            sectionTitleEng.textContent = book.title || originalSectionTitleEng;
+        }
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('smartteen-overlay-open');
@@ -305,7 +316,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             // helpers
                             function updatePdfControls() {
-                                if (pdfIndicator) pdfIndicator.textContent = pdfCurrentPage * 2 + ' / ' + (pdfPageCount / 2);
+                                var currentSpread = Math.ceil(pdfCurrentPage / 2);
+                                var totalSpreads = Math.ceil(pdfPageCount / 2);
+                                if (pdfIndicator) pdfIndicator.textContent = currentSpread + ' / ' + totalSpreads;
                                 if (pdfPrevBtn) pdfPrevBtn.disabled = pdfCurrentPage <= 1;
                                 if (pdfNextBtn) pdfNextBtn.disabled = pdfCurrentPage >= (pdfPageCount || 1);
                             }
@@ -346,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         return Promise.resolve();
                                     }
                                     return pdfDoc.getPage(pageNum).then(function (page) {
-                                        var wrapWidth = Math.floor((overlayPageViewer.clientWidth - 12) / 2) || overlayPageViewer.clientWidth / 2 || 400; // subtract small gap
+                                        var wrapWidth = Math.floor(Math.max(0, wrapEl.clientWidth - 12)) || Math.floor(overlayPageViewer.clientWidth / 2) || 400; // subtract small gap when present
                                         var viewportForScale = page.getViewport({ scale: 1 });
                                         var scale = (wrapWidth / viewportForScale.width) * 1.0;
                                         var viewport = page.getViewport({ scale: scale });
@@ -376,8 +389,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 return Promise.all([leftPromise, rightPromise]).then(function () {
                                     // update controls
                                     if (pdfIndicator) {
-                                        var rightLabel = (rightPageNum <= pdfPageCount) ? rightPageNum : pdfPageCount;
-                                        pdfIndicator.textContent = pdfCurrentPage + '/ ' + pdfPageCount / 2;
+                                        var currentSpread = Math.ceil(pdfCurrentPage / 2);
+                                        var totalSpreads = Math.ceil(pdfPageCount / 2);
+                                        pdfIndicator.textContent = currentSpread + ' / ' + totalSpreads;
                                     }
                                     if (pdfPrevBtn) pdfPrevBtn.disabled = leftPageNum <= 1;
                                     if (pdfNextBtn) pdfNextBtn.disabled = rightPageNum >= pdfPageCount;
@@ -454,6 +468,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // clear fallback timer
         clearTimeout(overlayPdfFallbackTimer);
         overlayPdfFallbackTimer = null;
+        if (sectionTitleCn) {
+            sectionTitleCn.textContent = originalSectionTitleCn;
+        }
+        if (sectionTitleEng) {
+            sectionTitleEng.textContent = originalSectionTitleEng;
+        }
         activeBook = null;
         activePage = 0;
     }
