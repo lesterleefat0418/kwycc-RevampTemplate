@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var rafId = null;
     var isSnapping = false; // true while smooth snapping/scrolling to center
     var overlayPdfFallbackTimer = null; // timer to detect iframe embed failure and fallback
+    var pdfJsLoadPromise = null;
 
     // PDF.js state
     var pdfDoc = null; // PDFDocumentProxy
@@ -59,6 +60,101 @@ document.addEventListener('DOMContentLoaded', function () {
         var enEls = document.querySelectorAll('.smartteen-eng, .smartteen-overlay__close-eng');
         cnEls.forEach(function (el) { el.style.display = isEn ? 'none' : ''; });
         enEls.forEach(function (el) { el.style.display = isEn ? '' : 'none'; });
+    }
+
+    function loadPdfJs() {
+        return new Promise(function (resolve, reject) {
+            if (window.pdfjsLib) {
+                return resolve(window.pdfjsLib);
+            }
+            if (pdfJsLoadPromise) {
+                return pdfJsLoadPromise.then(resolve).catch(reject);
+            }
+            pdfJsLoadPromise = new Promise(function (innerResolve, innerReject) {
+                var script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+                script.onload = function () {
+                    try {
+                        if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    if (window.pdfjsLib) {
+                        innerResolve(window.pdfjsLib);
+                    } else {
+                        innerReject(new Error('pdf.js failed to initialize'));
+                    }
+                };
+                script.onerror = function () {
+                    innerReject(new Error('Failed to load pdf.js'));
+                };
+                document.head.appendChild(script);
+            });
+            pdfJsLoadPromise.then(resolve).catch(reject);
+        });
+    }
+
+    function renderPdfCoverPreview(card, book) {
+        if (!card || !book || !book.pdf || card.dataset.pdfCoverRendered === '1') {
+            return;
+        }
+        if (card.dataset.pdfCoverRendered === 'pending') {
+            return;
+        }
+        card.dataset.pdfCoverRendered = 'pending';
+        var coverEl = card.querySelector('.smartteen-card__cover');
+        if (!coverEl) {
+            card.dataset.pdfCoverRendered = '0';
+            return;
+        }
+
+        loadPdfJs().then(function (pdfjsLib) {
+            return pdfjsLib.getDocument(book.pdf).promise;
+        }).then(function (pdf) {
+            return pdf.getPage(1);
+        }).then(function (page) {
+            var wrapWidth = Math.max(coverEl.clientWidth, coverEl.offsetWidth, 220);
+            var viewport = page.getViewport({ scale: 1 });
+            var scale = wrapWidth / viewport.width;
+            var pageViewport = page.getViewport({ scale: scale });
+            var canvas = document.createElement('canvas');
+            canvas.className = 'smartteen-pdf-card-preview';
+            canvas.width = Math.floor(pageViewport.width);
+            canvas.height = Math.floor(pageViewport.height);
+            canvas.style.display = 'block';
+            canvas.style.width = '100%';
+            var ctx = canvas.getContext('2d');
+            return page.render({ canvasContext: ctx, viewport: pageViewport }).promise.then(function () {
+                return canvas;
+            });
+        }).then(function (canvas) {
+            if (!coverEl) {
+                return;
+            }
+            coverEl.innerHTML = '';
+            coverEl.appendChild(canvas);
+            card.dataset.pdfCoverRendered = '1';
+        }).catch(function () {
+            card.dataset.pdfCoverRendered = '0';
+        });
+    }
+
+    function renderPdfCoverPreviews() {
+        refreshCardList();
+        cards.forEach(function (card) {
+            var bookData = card.getAttribute('data-book');
+            if (!bookData) {
+                return;
+            }
+            try {
+                var book = JSON.parse(bookData);
+            } catch (e) {
+                return;
+            }
+            renderPdfCoverPreview(card, book);
+        });
     }
 
     function removeClones() {
@@ -272,37 +368,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // clear previous viewer
                 overlayPageViewer.innerHTML = '';
 
-                // helper: dynamically load PDF.js from CDN if not present
-                function loadPdfJs(callback) {
-                    if (window.pdfjsLib) return callback(null, window.pdfjsLib);
-                    var script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-                    script.onload = function () {
-                        try {
-                            if (window.pdfjsLib) {
-                                // set workerSrc to CDN
-                                if (window.pdfjsLib.GlobalWorkerOptions) {
-                                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                                }
-                            }
-                        } catch (e) { /* ignore */ }
-                        callback(null, window.pdfjsLib);
-                    };
-                    script.onerror = function (err) { callback(new Error('Failed to load pdf.js')); };
-                    document.head.appendChild(script);
-                }
-
-                // render PDF with multi-page support using PDF.js
                 function renderPdfUrl(url) {
-                    loadPdfJs(function (err, pdfjsLib) {
-                        if (err) {
-                            if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available (could not load renderer). Use "Open PDF in new tab".'; fallbackMsgEl.style.display = ''; }
-                            return;
-                        }
-
+                    loadPdfJs().then(function (pdfjsLib) {
                         // fetch PDF document
+                        var loadingTask;
                         try {
-                            var loadingTask = pdfjsLib.getDocument(url);
+                            loadingTask = pdfjsLib.getDocument(url);
                         } catch (e) {
                             if (fallbackMsgEl) { fallbackMsgEl.textContent = 'Preview not available (failed to start PDF load). Use "Open PDF in new tab".'; fallbackMsgEl.style.display = ''; }
                             return;
@@ -476,6 +547,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         activeBook = null;
         activePage = 0;
+        // restore active carousel state after the carousel becomes visible again
+        window.requestAnimationFrame ? window.requestAnimationFrame(updateActiveState) : setTimeout(updateActiveState, 0);
     }
 
     function setOverlayPage(index) {
@@ -526,6 +599,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (evt && evt.preventDefault) evt.preventDefault();
                     return;
                 }
+                cards.forEach(function (c) {
+                    c.classList.toggle('active', c === card);
+                });
                 openOverlay(book);
                 // Otherwise snap to center
                 var left = card.offsetLeft + card.offsetWidth / 2 - viewport.clientWidth / 2;
@@ -596,6 +672,7 @@ document.addEventListener('DOMContentLoaded', function () {
         refreshCardList();
         attachCardEvents();
         updateCardSizes();
+        renderPdfCoverPreviews();
         centerInitialCard();
         updateActiveState();
     }

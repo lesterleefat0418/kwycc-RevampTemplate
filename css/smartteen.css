@@ -220,11 +220,8 @@
 }
 
 /* Images use contain so the full artwork/pattern is visible and remains centered */
-.smartteen-card__cover img {
-    /* Keep full artwork visible but make visual sizes consistent across different aspect ratios
-       We'll scale the image so non-active appears smaller while the card box width stays the same.
-       Default image scale is adjusted relative to the reserved box (nonactive / active).
-    */
+.smartteen-card__cover img,
+.smartteen-card__cover canvas {
     width: auto;
     height: 100%;
     max-width: 100%;
@@ -242,7 +239,9 @@
 
 /* Active card's cover scales up to fill the reserved box (visual emphasis) */
 .smartteen-card.active .smartteen-card__cover img,
-.smartteen-card:focus .smartteen-card__cover img {
+.smartteen-card.active .smartteen-card__cover canvas,
+.smartteen-card:focus .smartteen-card__cover img,
+.smartteen-card:focus .smartteen-card__cover canvas {
     transform: scale(1);
 }
 
@@ -256,11 +255,10 @@
 .smartteen-card__meta {
     /* positioned below the centered cover; grows downward when intro is long */
     position: absolute;
-    left: 1rem;
-    right: 1rem;
     top: calc(50% + (var(--cover-size) / 2) + 0.25rem);
     text-align: left;
     box-sizing: border-box;
+    width: 100%;
     opacity: 0;
     transition: opacity 0.22s ease, transform 0.22s ease;
     pointer-events: none;
@@ -283,7 +281,7 @@
     color: rgba(255, 255, 255, 0.9);
     max-height: 10rem;
     overflow: hidden;
-    padding: 1rem 1rem 1rem 1rem;
+    padding: 0rem 0rem 1rem 0rem;
 }
 
 .smartteen-card__read-btn {
@@ -660,13 +658,12 @@ body.smartteen-overlay-open .smartteen-carousel-section {
     .smartteen-overlay__inner {
         width: 100%;
         max-width: 100%;
-        border-radius: 20px;
     }
 
     .smartteen-overlay__content {
         position: relative;
-        padding: 2.5rem 1.5rem 1.5rem;
-        width: 100%;
+        padding: 6rem 2rem 2rem 2rem;
+        width: 85%;
         margin: 0 auto;
     }
 

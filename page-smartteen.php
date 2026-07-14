@@ -75,18 +75,6 @@ if (have_posts()):
                                 $book_title = get_the_title();
                                 // Use the theme/site thumbnail size for previews - filterable
                                 // For the carousel we use the original uploaded image (no cropping) to preserve aspect ratio.
-                                $cover_html = '';
-                                $thumb_id = get_post_meta($book_id, '_smartteen_thumb_id', true);
-                                if ($thumb_id && get_post_status($thumb_id)) {
-                                    // use full size to avoid WP crop artifacts; CSS will constrain display
-                                    $cover_html = wp_get_attachment_image($thumb_id, 'full', false, array('alt' => $book_title));
-                                } elseif (has_post_thumbnail($book_id)) {
-                                    $cover_html = wp_get_attachment_image(get_post_thumbnail_id($book_id), 'full', false, array('alt' => $book_title));
-                                } else {
-                                    $placeholder = get_stylesheet_directory_uri() . '/images/placeholder-book.png';
-                                    $cover_html = '<img src="' . esc_url($placeholder) . '" alt="' . esc_attr($book_title) . '">';
-                                }
-
                                 $intro = get_post_meta($book_id, '_smartteen_intro', true);
                                 if (empty($intro)) {
                                     $intro = get_the_excerpt();
@@ -94,6 +82,23 @@ if (have_posts()):
                                 $pages = get_post_meta($book_id, '_smartteen_pages', true);
                                 if (!is_array($pages)) {
                                     $pages = array();
+                                }
+                                $first_page_image = '';
+                                if (!empty($pages[0]['image'])) {
+                                    $first_page_image = $pages[0]['image'];
+                                }
+                                $cover_html = '';
+                                $thumb_id = get_post_meta($book_id, '_smartteen_thumb_id', true);
+                                if ($thumb_id && get_post_status($thumb_id)) {
+                                    // use full size to avoid WP crop artifacts; CSS will constrain display
+                                    $cover_html = wp_get_attachment_image($thumb_id, 'full', false, array('alt' => $book_title));
+                                } elseif (has_post_thumbnail($book_id)) {
+                                    $cover_html = wp_get_attachment_image(get_post_thumbnail_id($book_id), 'full', false, array('alt' => $book_title));
+                                } elseif (!empty($first_page_image)) {
+                                    $cover_html = '<img src="' . esc_url($first_page_image) . '" alt="' . esc_attr($book_title) . '">';
+                                } else {
+                                    $placeholder = get_stylesheet_directory_uri() . '/images/placeholder-book.png';
+                                    $cover_html = '<img src="' . esc_url($placeholder) . '" alt="' . esc_attr($book_title) . '">';
                                 }
                                 $book_data = array(
                                     'id' => $book_id,
