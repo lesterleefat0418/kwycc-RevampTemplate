@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             // helpers
                             function updatePdfControls() {
-                                if (pdfIndicator) pdfIndicator.textContent = pdfCurrentPage + ' / ' + (pdfPageCount || 1);
+                                if (pdfIndicator) pdfIndicator.textContent = pdfCurrentPage * 2 + ' / ' + (pdfPageCount / 2);
                                 if (pdfPrevBtn) pdfPrevBtn.disabled = pdfCurrentPage <= 1;
                                 if (pdfNextBtn) pdfNextBtn.disabled = pdfCurrentPage >= (pdfPageCount || 1);
                             }
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     // update controls
                                     if (pdfIndicator) {
                                         var rightLabel = (rightPageNum <= pdfPageCount) ? rightPageNum : pdfPageCount;
-                                        pdfIndicator.textContent = leftPageNum + '–' + rightLabel + ' / ' + (pdfPageCount || 1);
+                                        pdfIndicator.textContent = pdfCurrentPage + '/ ' + pdfPageCount / 2;
                                     }
                                     if (pdfPrevBtn) pdfPrevBtn.disabled = leftPageNum <= 1;
                                     if (pdfNextBtn) pdfNextBtn.disabled = rightPageNum >= pdfPageCount;

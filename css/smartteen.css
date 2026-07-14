@@ -319,28 +319,29 @@
 }
 
 .smartteen-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(5, 7, 20, 0.94);
+    position: relative;
+    inset: auto;
+    background-image: url(../images/bgBlurredBlack.png);
+    background-repeat: no-repeat;
+    background-size: cover;
     display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    z-index: 9999;
+    width: 100%;
 }
 
 .smartteen-overlay.open {
-    display: flex;
+    display: block;
+}
+
+body.smartteen-overlay-open .smartteen-carousel-section {
+    display: none;
 }
 
 .smartteen-overlay__inner {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: auto;
     overflow: hidden;
-    background: rgba(16, 22, 54, 0.98);
-    border-radius: 28px;
-    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+    margin-bottom: 5rem;
 }
 
 .smartteen-overlay__close-wrap {
@@ -384,9 +385,10 @@
 
 .smartteen-overlay__content {
     position: relative;
-    padding: 4rem 3rem 2rem;
-    width: 50%;
-    margin: auto;
+    padding: 2.5rem 3rem 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .smartteen-overlay__book-meta {
@@ -409,6 +411,12 @@
     height: auto;
     display: block;
     object-fit: cover;
+}
+
+.smartteen-overlay__pdf-link a {
+    display: inline-block;
+    color: #fff;
+    text-decoration: underline;
 }
 
 .smartteen-overlay__book-info {
@@ -436,8 +444,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: row;
-    width: 50%;
-    gap: 1rem;
+    width: 13rem;
     margin: 1rem auto;
 }
 
@@ -658,9 +665,9 @@
 
     .smartteen-overlay__content {
         position: relative;
-        padding: 20rem 20rem 0rem 0rem;
+        padding: 2.5rem 1.5rem 1.5rem;
         width: 100%;
-        margin: auto;
+        margin: 0 auto;
     }
 
     /* PDF overlay sizing: make iframe fill most of viewport and fit responsively */

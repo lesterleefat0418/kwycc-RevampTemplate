@@ -22,6 +22,37 @@ if (have_posts()):
                 <span class="smartteen-eng"><?php echo esc_html($page_title); ?></span>
             </h2>
 
+            <div id="smartteenOverlay" class="smartteen-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+                <div class="smartteen-overlay__inner" role="document">
+                    <div class="smartteen-overlay__close-wrap" role="group" aria-label="<?php echo esc_attr__('Close Smartteen overlay', 'revamppage'); ?>">
+                        <div class="smartteen-overlay__close-text">
+                            <span class="smartteen-overlay__close-cn">關閉</span>
+                            <span class="smartteen-overlay__close-eng">Close</span>
+                        </div>
+                        <button type="button" class="smartteen-overlay__close" aria-label="<?php echo esc_attr__('Close overlay', 'revamppage'); ?>">×</button>
+                    </div>
+
+                    <div class="smartteen-overlay__content">
+                        <div class="smartteen-overlay__pdf-wrap">
+                            <!-- PDF.js viewer container (preferred) -->
+                            <div class="smartteen-overlay__book-page" aria-live="polite"></div>
+
+                            <!-- page controls (prev / indicator / next) -->
+                            <div class="smartteen-overlay__page-controls" style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:1rem;">
+                                <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--prev" aria-label="Previous page">‹</button>
+                                <div class="smartteen-overlay__page-indicator">&nbsp;</div>
+                                <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--next" aria-label="Next page">›</button>
+                            </div>
+
+                            <!-- iframe kept as fallback for servers where embedding works -->
+                            <iframe id="smartteenOverlayPdf" src="" frameborder="0" style="width:100%; height:70vh; border-radius:8px; display:none;"></iframe>
+                            <div class="smartteen-overlay__pdf-link" style="margin-top:8px; text-align:center;"><a href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a></div>
+                            <div class="smartteen-overlay__pdf-fallback" style="margin-top:8px; text-align:center; display:none; color:#ddd;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="smartteen-carousel-section">
                 <?php
                 $smartteen_query = new WP_Query(array(
@@ -109,37 +140,6 @@ if (have_posts()):
                 ?>
             </div>
         </section>
-
-        <div id="smartteenOverlay" class="smartteen-overlay" aria-hidden="true" role="dialog" aria-modal="true">
-            <div class="smartteen-overlay__inner" role="document">
-                <div class="smartteen-overlay__close-wrap" role="group" aria-label="<?php echo esc_attr__('Close Smartteen overlay', 'revamppage'); ?>">
-                    <div class="smartteen-overlay__close-text">
-                        <span class="smartteen-overlay__close-cn">關閉</span>
-                        <span class="smartteen-overlay__close-eng">Close</span>
-                    </div>
-                    <button type="button" class="smartteen-overlay__close" aria-label="<?php echo esc_attr__('Close overlay', 'revamppage'); ?>">×</button>
-                </div>
-
-                <div class="smartteen-overlay__content">
-                    <div class="smartteen-overlay__pdf-wrap">
-                        <!-- PDF.js viewer container (preferred) -->
-                        <div class="smartteen-overlay__book-page" aria-live="polite"></div>
-
-                        <!-- page controls (prev / indicator / next) -->
-                        <div class="smartteen-overlay__page-controls" style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:1rem;">
-                            <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--prev" aria-label="Previous page">‹</button>
-                            <div class="smartteen-overlay__page-indicator">&nbsp;</div>
-                            <button type="button" class="smartteen-overlay__page-nav smartteen-overlay__page-nav--next" aria-label="Next page">›</button>
-                        </div>
-
-                        <!-- iframe kept as fallback for servers where embedding works -->
-                        <iframe id="smartteenOverlayPdf" src="" frameborder="0" style="width:100%; height:70vh; border-radius:8px; display:none;"></iframe>
-                        <div class="smartteen-overlay__pdf-link" style="margin-top:8px; text-align:center;"><a href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a></div>
-                        <div class="smartteen-overlay__pdf-fallback" style="margin-top:8px; text-align:center; display:none; color:#ddd;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <?php
     endwhile;
 endif;
