@@ -555,11 +555,15 @@ function revamppage_enqueue()
             true
         );
 
-        wp_localize_script('revamppage-past-activities', 'revamppagePastActivities', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'ajax_action' => 'revamppage_filter_past_activities',
-            'nonce' => wp_create_nonce('revamppage_past_activities'),
-        ));
+        wp_localize_script(
+            'revamppage-past-activities',
+            'revamppagePastActivities',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'ajax_action' => 'revamppage_filter_past_activities',
+                'nonce' => wp_create_nonce('revamppage_past_activities'),
+            )
+        );
     }
 
     if (is_page_template('page-smartteen.php')) {
@@ -612,6 +616,93 @@ function revamppage_enqueue()
 }
 add_action('wp_enqueue_scripts', 'revamppage_enqueue');
 
+function revamppage_get_current_language_code($fallback = '')
+{
+    $lang = '';
+
+    if (!empty($fallback)) {
+        $lang = sanitize_text_field(wp_unslash($fallback));
+    }
+
+    if (empty($lang) && isset($_POST['lang'])) {
+        $lang = sanitize_text_field(wp_unslash($_POST['lang']));
+    }
+
+    if (empty($lang) && isset($_GET['lang'])) {
+        $lang = sanitize_text_field(wp_unslash($_GET['lang']));
+    }
+
+    if (empty($lang) && function_exists('apply_filters')) {
+        $wpml_lang = apply_filters('wpml_current_language', null);
+        if (!empty($wpml_lang)) {
+            $lang = sanitize_text_field(wp_unslash($wpml_lang));
+        }
+    }
+
+    if (empty($lang) && function_exists('pll_current_language')) {
+        $pll_lang = pll_current_language('slug');
+        if (!empty($pll_lang)) {
+            $lang = sanitize_text_field(wp_unslash($pll_lang));
+        }
+    }
+
+    if (empty($lang)) {
+        $locale = get_locale();
+        if (!empty($locale)) {
+            $locale = strtolower($locale);
+            if (strpos($locale, 'en') !== false) {
+                $lang = 'en';
+            } elseif (strpos($locale, 'zh') !== false || strpos($locale, 'hk') !== false || strpos($locale, 'tw') !== false || strpos($locale, 'cn') !== false) {
+                $lang = 'zh';
+            }
+        }
+    }
+
+    if (empty($lang) && !empty($_COOKIE['revamppage_lang'])) {
+        $lang = sanitize_text_field(wp_unslash($_COOKIE['revamppage_lang']));
+    }
+
+    if (empty($lang)) {
+        $lang = 'zh';
+    }
+
+    return $lang;
+}
+
+function revamppage_get_language_code_for_query($lang = '')
+{
+    $lang = revamppage_get_current_language_code($lang);
+    if (empty($lang)) {
+        return '';
+    }
+
+    $lang = strtolower($lang);
+
+    if (in_array($lang, array('en', 'en_us', 'en-us', 'english'), true)) {
+        return 'en_US';
+    }
+
+    if (in_array($lang, array('zh', 'zh_hk', 'zh-hk', 'hk', 'traditional', 'traditional_chinese'), true)) {
+        return 'zh_HK';
+    }
+
+    if (in_array($lang, array('zh_cn', 'zh-cn', 'cn', 'simplified', 'simplified_chinese'), true)) {
+        return 'zh_CN';
+    }
+
+    return $lang;
+}
+
+function revamppage_get_language_query_args($lang = '')
+{
+    $lang_code = revamppage_get_language_code_for_query($lang);
+    if (empty($lang_code)) {
+        return array();
+    }
+
+    return array('lang' => $lang_code);
+}
+
 function revamppage_build_past_activities_query_args($page_id, $paged, $posts_per_page = 8, $filter_values = array())
 {
     $args = array(
@@ -632,6 +723,11 @@ function revamppage_build_past_activities_query_args($page_id, $paged, $posts_pe
             ),
         ),
     );
+
+    $language_query_args = revamppage_get_language_query_args(isset($filter_values['lang']) ? $filter_values['lang'] : '');
+    if (!empty($language_query_args)) {
+        $args = array_merge($args, $language_query_args);
+    }
 
     $cat = isset($filter_values['cat']) ? absint($filter_values['cat']) : 0;
     if ($cat > 0) {
@@ -722,6 +818,7 @@ function revamppage_render_past_activities_markup($pa_query, $paged, $page_id, $
     if ($pa_query->found_posts > 0) {
         $pagination_query_args = array(
             'page_id' => absint($page_id),
+            'lang' => revamppage_get_language_code_for_query(isset($filter_values['lang']) ? $filter_values['lang'] : ''),
         );
 
         if (!empty($filter_values['cat'])) {
@@ -785,6 +882,7 @@ function revamppage_handle_past_activities_filter()
         'year' => isset($_POST['year']) ? sanitize_text_field(wp_unslash($_POST['year'])) : '',
         'month' => isset($_POST['month']) ? sanitize_text_field(wp_unslash($_POST['month'])) : '',
         's' => isset($_POST['s']) ? sanitize_text_field(wp_unslash($_POST['s'])) : '',
+        'lang' => isset($_POST['lang']) ? sanitize_text_field(wp_unslash($_POST['lang'])) : '',
     );
 
     $pa_query = new WP_Query(revamppage_build_past_activities_query_args($page_id, $paged, 8, $filter_values));

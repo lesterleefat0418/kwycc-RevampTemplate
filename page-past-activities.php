@@ -28,6 +28,7 @@ if (have_posts()):
             'year' => isset($_GET['year']) ? sanitize_text_field(wp_unslash($_GET['year'])) : '',
             'month' => isset($_GET['month']) ? sanitize_text_field(wp_unslash($_GET['month'])) : '',
             's' => isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '',
+            'lang' => isset($_GET['lang']) ? sanitize_text_field(wp_unslash($_GET['lang'])) : '',
         );
         $has_filters = !empty($filter_values['cat']) || !empty($filter_values['year']) || !empty($filter_values['month']) || !empty($filter_values['s']);
 
@@ -44,16 +45,20 @@ if (have_posts()):
                 <div class="pa-activities">
                     <div class="pa-controls">
                         <form id="pa-filter-form" method="get" class="pa-filter-form" role="search" aria-label="<?php esc_attr_e('Filter posts', 'revamppage'); ?>">
-                            <input type="hidden" name="paged" value="<?php echo (int) $paged; ?>">
-                            <input type="hidden" name="page_id" value="<?php echo esc_attr(absint($current_page_id)); ?>">
+                        <input type="hidden" name="paged" value="<?php echo (int) $paged; ?>">
+                        <input type="hidden" name="page_id" value="<?php echo esc_attr(absint($current_page_id)); ?>">
+                        <input type="hidden" name="lang" value="<?php echo esc_attr(revamppage_get_current_language_code($filter_values['lang'])); ?>">
 
                             <select id="pa-cat" name="cat" class="pa-select">
                                 <option value="" data-cn="類別" data-en="All Categories">類別</option>
                                 <?php
-                                $cats = get_terms(array(
-                                    'taxonomy' => 'category',
-                                    'hide_empty' => false,
-                                ));
+                                $cats = get_terms(array_merge(
+                                        revamppage_get_language_query_args($filter_values['lang']),
+                                        array(
+                                            'taxonomy' => 'category',
+                                            'hide_empty' => false,
+                                        )
+                                    ));
 
                                 if ($cats && !is_wp_error($cats)) {
                                     foreach ($cats as $c) {
@@ -118,10 +123,13 @@ if (have_posts()):
 
                         <div class="pa-tag-list" aria-hidden="false">
                             <?php
-                            $top_cats = get_terms(array(
-                                'taxonomy' => 'category',
-                                'hide_empty' => true,
-                            ));
+                                $top_cats = get_terms(array_merge(
+                                        revamppage_get_language_query_args($filter_values['lang']),
+                                        array(
+                                            'taxonomy' => 'category',
+                                            'hide_empty' => true,
+                                        )
+                                    ));
 
                             if ($top_cats && !is_wp_error($top_cats)) {
                                 foreach ($top_cats as $tc) {
@@ -129,6 +137,7 @@ if (have_posts()):
                                         array(
                                             'page_id' => absint($current_page_id),
                                             'cat' => intval($tc->term_id),
+                                            'lang' => revamppage_get_current_language_code($filter_values['lang']),
                                         ),
                                         $page_permalink
                                     );
