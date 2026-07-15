@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -554,6 +554,12 @@ function revamppage_enqueue()
             '1.0',
             true
         );
+
+        wp_localize_script('revamppage-past-activities', 'revamppagePastActivities', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'ajax_action' => 'revamppage_filter_past_activities',
+            'nonce' => wp_create_nonce('revamppage_past_activities'),
+        ));
     }
 
     if (is_page_template('page-smartteen.php')) {
@@ -605,6 +611,196 @@ function revamppage_enqueue()
     );
 }
 add_action('wp_enqueue_scripts', 'revamppage_enqueue');
+
+function revamppage_build_past_activities_query_args($page_id, $paged, $posts_per_page = 8, $filter_values = array())
+{
+    $args = array(
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => $posts_per_page,
+        'paged' => max(1, absint($paged)),
+        'orderby' => 'date',
+        'order' => 'DESC',
+        'date_query' => array(
+            array(
+                'after' => array(
+                    'year' => 2020,
+                    'month' => 1,
+                    'day' => 1,
+                ),
+                'inclusive' => true,
+            ),
+        ),
+    );
+
+    $cat = isset($filter_values['cat']) ? absint($filter_values['cat']) : 0;
+    if ($cat > 0) {
+        $args['cat'] = $cat;
+    }
+
+    $year = isset($filter_values['year']) ? absint($filter_values['year']) : 0;
+    if ($year > 0) {
+        $args['year'] = $year;
+    }
+
+    $month = isset($filter_values['month']) ? absint($filter_values['month']) : 0;
+    if ($month > 0) {
+        $args['monthnum'] = $month;
+    }
+
+    $search = isset($filter_values['s']) ? sanitize_text_field(wp_unslash($filter_values['s'])) : '';
+    if ($search !== '') {
+        $args['s'] = $search;
+    }
+
+    return $args;
+}
+
+function revamppage_render_past_activities_markup($pa_query, $paged, $page_id, $filter_values = array())
+{
+    ob_start();
+
+    if ($pa_query->have_posts()):
+        while ($pa_query->have_posts()):
+            $pa_query->the_post();
+
+            $post_categories = get_the_category();
+            $category_name = '';
+            if (!empty($post_categories)) {
+                $category_name = $post_categories[0]->name;
+            }
+            ?>
+            <article class="pa-card" id="post-<?php the_ID(); ?>">
+                <a class="pa-card-link" href="<?php the_permalink(); ?>">
+                    <div class="pa-card-thumb">
+                        <?php
+                        if (function_exists('revamppage_get_activity_image_html')) {
+                            echo wp_kses_post(revamppage_get_activity_image_html(get_the_ID(), 'medium'));
+                        } elseif (has_post_thumbnail()) {
+                            echo get_the_post_thumbnail(get_the_ID(), 'medium');
+                        }
+                        ?>
+                    </div>
+                    <div class="pa-card-body">
+                        <?php if (!empty($category_name)): ?>
+                        <?php endif; ?>
+
+                        <h3 class="pa-card-title">
+                            <span class="pa-title-cn"><?php echo esc_html(get_the_title()); ?></span>
+                            <span class="pa-title-en" style="display:none;"><?php echo esc_html(get_the_title()); ?></span>
+                        </h3>
+
+                        <div class="pa-card-meta">
+                            <?php
+                            $raw_date = get_the_date('Y-m-d');
+                            $timestamp = strtotime($raw_date);
+                            $date_cn = $timestamp ? date_i18n('d/m/Y', $timestamp) : esc_html(get_the_date());
+                            $date_en = esc_html(get_the_date('F j, Y'));
+                            ?>
+                            <span class="pa-date-cn">日期: <?php echo esc_html($date_cn); ?></span>
+                            <span class="pa-date-en" style="display:none;">Date: <?php echo $date_en; ?></span>
+                        </div>
+                    </div>
+                </a>
+            </article>
+            <?php
+        endwhile;
+        wp_reset_postdata();
+    else:
+        ?>
+        <div class="pa-empty">
+            <p><?php esc_html_e('No posts found. Please try another filter.', 'revamppage'); ?></p>
+        </div>
+        <?php
+    endif;
+
+    $grid_html = ob_get_clean();
+
+    $pagination_html = '';
+    $pagination_info_html = '';
+
+    if ($pa_query->found_posts > 0) {
+        $pagination_query_args = array(
+            'page_id' => absint($page_id),
+        );
+
+        if (!empty($filter_values['cat'])) {
+            $pagination_query_args['cat'] = absint($filter_values['cat']);
+        }
+
+        if (!empty($filter_values['year'])) {
+            $pagination_query_args['year'] = absint($filter_values['year']);
+        }
+
+        if (!empty($filter_values['month'])) {
+            $pagination_query_args['month'] = absint($filter_values['month']);
+        }
+
+        if (!empty($filter_values['s'])) {
+            $pagination_query_args['s'] = sanitize_text_field(wp_unslash($filter_values['s']));
+        }
+
+        $pagination_base = add_query_arg($pagination_query_args, get_permalink($page_id));
+        $pagination_base = add_query_arg('paged', '%#%', $pagination_base);
+
+        $pagination_info_cn = sprintf(__('共 %d 頁・目前第 %d 頁', 'revamppage'), (int) $pa_query->max_num_pages, (int) $paged);
+        $pagination_info_en = sprintf('Page %d of %d', (int) $paged, (int) $pa_query->max_num_pages);
+
+        $pagination_info_html = '<div class="pa-pagination-info" data-cn="' . esc_attr($pagination_info_cn) . '" data-en="' . esc_attr($pagination_info_en) . '">' . esc_html($pagination_info_cn) . '</div>';
+
+        $pagination_html = '<div class="pa-pagination">' . $pagination_info_html . paginate_links(array(
+            'base' => $pagination_base,
+            'format' => '',
+            'current' => $paged,
+            'total' => (int) $pa_query->max_num_pages,
+            'prev_text' => '«',
+            'next_text' => '»',
+            'mid_size' => 2,
+            'end_size' => 1,
+        )) . '</div>';
+    }
+
+    return array(
+        'grid_html' => $grid_html,
+        'pagination_html' => $pagination_html,
+        'pagination_info_html' => $pagination_info_html,
+        'max_num_pages' => (int) $pa_query->max_num_pages,
+        'found_posts' => (int) $pa_query->found_posts,
+        'paged' => (int) $paged,
+    );
+}
+
+function revamppage_handle_past_activities_filter()
+{
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'revamppage_past_activities')) {
+        wp_send_json_error(array('message' => 'Security check failed'));
+        wp_die();
+    }
+
+    $page_id = isset($_POST['page_id']) ? absint($_POST['page_id']) : 0;
+    $paged = isset($_POST['paged']) ? max(1, absint($_POST['paged'])) : 1;
+
+    $filter_values = array(
+        'cat' => isset($_POST['cat']) ? sanitize_text_field(wp_unslash($_POST['cat'])) : '',
+        'year' => isset($_POST['year']) ? sanitize_text_field(wp_unslash($_POST['year'])) : '',
+        'month' => isset($_POST['month']) ? sanitize_text_field(wp_unslash($_POST['month'])) : '',
+        's' => isset($_POST['s']) ? sanitize_text_field(wp_unslash($_POST['s'])) : '',
+    );
+
+    $pa_query = new WP_Query(revamppage_build_past_activities_query_args($page_id, $paged, 8, $filter_values));
+    $markup = revamppage_render_past_activities_markup($pa_query, $paged, $page_id, $filter_values);
+
+    wp_send_json_success(array(
+        'grid_html' => $markup['grid_html'],
+        'pagination_html' => $markup['pagination_html'],
+        'max_num_pages' => $markup['max_num_pages'],
+        'found_posts' => $markup['found_posts'],
+        'paged' => $markup['paged'],
+    ));
+    wp_die();
+}
+add_action('wp_ajax_revamppage_filter_past_activities', 'revamppage_handle_past_activities_filter');
+add_action('wp_ajax_nopriv_revamppage_filter_past_activities', 'revamppage_handle_past_activities_filter');
 
 /**
  * Enqueue activity page scripts and styles

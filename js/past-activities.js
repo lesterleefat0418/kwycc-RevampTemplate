@@ -115,10 +115,21 @@
         var form = document.getElementById('pa-filter-form');
 
         if (form) {
-            $all('.pa-select', form).forEach(function (sel) {
-                sel.addEventListener('change', function () {
-                    form.submit();
-                });
+            var data = new FormData(form);
+
+            data.forEach(function (value, key) {
+                if (typeof value === 'string' && value.trim() === '') {
+                    params.delete(key);
+                    return;
+                }
+
+                if (key === 'paged') {
+                    return;
+                }
+
+                if (value) {
+                    params.set(key, value);
+                }
             });
 
             var search = $('#pa-s', form);
