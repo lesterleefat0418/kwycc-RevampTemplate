@@ -972,8 +972,6 @@ function revamppage_handle_activity_signup()
     // Increment booked seats
     update_post_meta($post_id, '_activity_booked_seats', $booked_seats + 1);
 
-    // Save signup data (you can expand this to store in a custom table or email)
-    // For now, we'll just return success
     do_action('revamppage_activity_signup', $signup_data);
 
     wp_send_json_success(array(

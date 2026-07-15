@@ -121,6 +121,17 @@
         anchorsMap = { zh: [], en: [] };
     }
 
+    function isPastActivitiesPage() {
+        if (document.getElementById('revamppage-past-activities')) {
+            return true;
+        }
+
+        if (window.location.pathname && /past-activities/i.test(window.location.pathname)) {
+            return true;
+        }
+
+        return false;
+    }
     // Function to switch language and update menu display
     // opts: { navigate: true|false } - when false, DO NOT change location/history (used for init)
     function switchLanguage(lang, opts) {
@@ -175,6 +186,18 @@
         // Update stored language
         currentLang = lang;
         try { localStorage.setItem('revamppage_lang', lang); } catch (e) { /* ignore */ }
+
+        // For past activities page, stay on the same page and only update lang.
+        if (isPastActivitiesPage()) {
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                window.history.replaceState({}, '', url.toString());
+            } catch (e) {
+                // ignore
+            }
+            return;
+        }
 
         // Map using precomputed arrays (fast, immediate)
         try {
