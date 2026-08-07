@@ -70,67 +70,87 @@ document.body.classList.add('is-activity-page');
                 'order' => 'DESC',
             );
 
-            // Add meta_key and meta_query only if needed
             if (!empty($meta_key)) {
                 $args['meta_key'] = $meta_key;
             }
 
-            // Only filter by future deadlines
-            $args['meta_query'] = array(
-                array(
-                    'key' => '_activity_deadline',
-                    'value' => current_time('Y-m-d'),
-                    'compare' => '>=',
-                    'type' => 'DATE'
-                )
-            );
-
             $query = new WP_Query($args);
+            $activity_items = array();
 
             if ($query->have_posts()):
                 while ($query->have_posts()):
                     $query->the_post();
 
-                    $deadline = get_post_meta(get_the_ID(), '_activity_deadline', true);
-                    $total_seats = (int) get_post_meta(get_the_ID(), '_activity_total_seats', true);
-                    $booked_seats = (int) get_post_meta(get_the_ID(), '_activity_booked_seats', true);
+                    $activity_id = get_the_ID();
+                    $deadline = get_post_meta($activity_id, '_activity_deadline', true);
+                    $total_seats = (int) get_post_meta($activity_id, '_activity_total_seats', true);
+                    $booked_seats = (int) get_post_meta($activity_id, '_activity_booked_seats', true);
                     $remaining_seats = max(0, $total_seats - $booked_seats);
                     $is_full = ($remaining_seats <= 0);
-                    $activity_code = get_post_meta(get_the_ID(), '_activity_code', true);
-                    $activity_location = get_post_meta(get_the_ID(), '_activity_location', true);
-                    $activity_time = get_post_meta(get_the_ID(), '_activity_time', true);
-                    $short_desc = get_post_meta(get_the_ID(), '_activity_short_desc', true);
+                    $activity_code = get_post_meta($activity_id, '_activity_code', true);
+                    $activity_location = get_post_meta($activity_id, '_activity_location', true);
+                    $activity_time = get_post_meta($activity_id, '_activity_time', true);
+                    $short_desc = get_post_meta($activity_id, '_activity_short_desc', true);
+                    $is_expired = revamppage_is_activity_expired($activity_id);
+                    $expired_behavior = revamppage_get_activity_expired_behavior($activity_id);
+
+                    if ($is_expired && $expired_behavior === 'hide') {
+                        continue;
+                    }
 
                     $deadline_display = $deadline ? date('Y-m-d', strtotime($deadline)) : 'N/A';
+                    $activity_items[] = array(
+                        'id' => $activity_id,
+                        'title' => get_the_title(),
+                        'deadline_display' => $deadline_display,
+                        'remaining_seats' => $remaining_seats,
+                        'is_full' => $is_full,
+                        'activity_code' => $activity_code,
+                        'activity_location' => $activity_location,
+                        'activity_time' => $activity_time,
+                        'short_desc' => $short_desc,
+                        'is_expired' => $is_expired,
+                        'expired_behavior' => $expired_behavior,
+                    );
+                endwhile;
+                wp_reset_postdata();
+            endif;
+
+            if (!empty($activity_items)):
+                foreach ($activity_items as $activity_item):
+                    $is_expired_disabled = !empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'disabled';
+                    $is_expired_active = !empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'active';
+                    $button_label = $is_expired_disabled ? esc_html__('已截止', 'revamppage') : ($activity_item['is_full'] ? esc_html__('已額滿', 'revamppage') : esc_html__('報名', 'revamppage'));
                     ?>
                     
-                    <div class="activity-card" data-post-id="<?php echo esc_attr(get_the_ID()); ?>">
+                    <div class="activity-card<?php echo $is_expired_disabled ? ' is-expired' : ''; ?><?php echo $is_expired_active ? ' is-expired-active' : ''; ?>" data-post-id="<?php echo esc_attr($activity_item['id']); ?>">
                         <div class="activity-card-inner">
                             <!-- Image Section -->
                             <div class="activity-card-image">
                                 <?php
-                                if (has_post_thumbnail()) {
-                                    the_post_thumbnail('large', array('alt' => esc_attr(get_the_title())));
+                                $thumbnail_html = get_the_post_thumbnail($activity_item['id'], 'large', array('alt' => esc_attr($activity_item['title'])));
+                                if (!empty($thumbnail_html)) {
+                                    echo $thumbnail_html;
                                 } else {
-                                    echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/placeholder.png') . '" alt="' . esc_attr(get_the_title()) . '">';
+                                    echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/placeholder.png') . '" alt="' . esc_attr($activity_item['title']) . '">';
                                 }
                                 ?>
                             </div>
 
                             <!-- Content Section -->
                             <div class="activity-card-content">
-                                <h3 class="activity-card-title"><?php the_title(); ?></h3>
+                                <h3 class="activity-card-title"><?php echo esc_html($activity_item['title']); ?></h3>
                                 
                                 <!-- Date & Time -->
                                 <div class="activity-card-meta">
                                     <div class="activity-meta-item">
                                         <span class="activity-meta-icon">📅</span>
-                                        <span class="activity-meta-text"><?php echo esc_html($deadline ? date('Y-m-d (D)', strtotime($deadline)) : 'N/A'); ?></span>
+                                        <span class="activity-meta-text"><?php echo esc_html($activity_item['deadline_display'] ? date('Y-m-d (D)', strtotime($activity_item['deadline_display'])) : 'N/A'); ?><?php if (!empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'active'): ?><span class="card-complete-tag">（已完結）</span><?php endif; ?></span>
                                     </div>
-                                    <?php if (!empty($activity_time)): ?>
+                                    <?php if (!empty($activity_item['activity_time'])): ?>
                                         <div class="activity-meta-item">
                                             <span class="activity-meta-icon">🕐</span>
-                                            <span class="activity-meta-text"><?php echo esc_html($activity_time); ?></span>
+                                            <span class="activity-meta-text"><?php echo esc_html($activity_item['activity_time']); ?></span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -139,40 +159,39 @@ document.body.classList.add('is-activity-page');
                                 <div class="activity-details-grid">
                                     <div class="activity-detail">
                                         <span class="activity-detail-label">活動:</span>
-                                        <span class="activity-detail-value"><?php echo esc_html(get_the_title()); ?></span>
+                                        <span class="activity-detail-value"><?php echo esc_html($activity_item['title']); ?></span>
                                     </div>
-                                    <?php if (!empty($activity_code)): ?>
+                                    <?php if (!empty($activity_item['activity_code'])): ?>
                                         <div class="activity-detail">
                                             <span class="activity-detail-label">編號:</span>
-                                            <span class="activity-detail-value"><?php echo esc_html($activity_code); ?></span>
+                                            <span class="activity-detail-value"><?php echo esc_html($activity_item['activity_code']); ?></span>
                                         </div>
                                     <?php endif; ?>
-                                    <?php if (!empty($activity_location)): ?>
+                                    <?php if (!empty($activity_item['activity_location'])): ?>
                                         <div class="activity-detail">
                                             <span class="activity-detail-label">地點:</span>
-                                            <span class="activity-detail-value"><?php echo esc_html($activity_location); ?></span>
+                                            <span class="activity-detail-value"><?php echo esc_html($activity_item['activity_location']); ?></span>
                                         </div>
                                     <?php endif; ?>
                                     <div class="activity-detail">
                                         <span class="activity-detail-label">名額:</span>
-                                        <span class="activity-detail-value"><?php echo esc_html($remaining_seats); ?></span>
+                                        <span class="activity-detail-value"><?php echo esc_html($activity_item['remaining_seats']); ?></span>
                                     </div>
                                     <div class="activity-detail">
                                         <span class="activity-detail-label">截止日期:</span>
-                                        <span class="activity-detail-value"><?php echo esc_html($deadline_display); ?></span>
+                                        <span class="activity-detail-value"><?php echo esc_html($activity_item['deadline_display']); ?></span>
                                     </div>
                                 </div>
 
                                 <!-- Signup Button -->
-                                <button class="activity-btn-signup" data-post-id="<?php echo esc_attr(get_the_ID()); ?>">
-                                    <?php echo $is_full ? esc_html__('已額滿', 'revamppage') : esc_html__('報名', 'revamppage'); ?>
+                                <button class="activity-btn-signup<?php echo $is_expired_disabled ? ' is-disabled' : ''; ?>" data-post-id="<?php echo esc_attr($activity_item['id']); ?>" <?php echo $is_expired_disabled ? 'disabled' : ''; ?>>
+                                    <?php echo $button_label; ?>
                                 </button>
                             </div>
                         </div>
                     </div>
                     <?php
-                endwhile;
-                wp_reset_postdata();
+                endforeach;
             else:
                 ?>
                 <div class="no-activities-message">

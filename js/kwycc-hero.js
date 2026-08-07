@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var N = originals.length;
     if (N === 0) return;
 
-    var enableInfinite = N >= 5;
+    var enableInfinite = N > 1;
     var enableSnap = true;
     var allCards = [];
     var middleStart = 0;
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!middleOriginals[0]) return;
         var card = middleOriginals[0];
         var target = card.offsetLeft + (card.offsetWidth / 2) - (wrap.clientWidth / 2);
-        wrap.scrollLeft = target;
+        wrap.scrollLeft = Math.max(0, target);
     }
 
     function snapToClosest() {

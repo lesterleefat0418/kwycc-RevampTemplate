@@ -342,6 +342,8 @@ body:not(.custom-background) {
     gap: var(--gap);
     align-items: center;
     width: max-content;
+    min-width: 100%;
+    justify-content: center;
     padding: 8px 0;
     box-sizing: border-box;
 }
@@ -378,6 +380,26 @@ body:not(.custom-background) {
     flex-basis: var(--card-large-w);
     height: var(--card-large-h);
     border-radius: 18px;
+}
+
+.kwycc-card.is-expired {
+    filter: grayscale(0.8);
+    opacity: 0.75;
+}
+
+.kwycc-card.is-expired-active {
+    filter: none;
+    opacity: 1;
+}
+
+.kwycc-card.is-expired .card-link {
+    cursor: not-allowed;
+}
+
+.card-complete-tag {
+    color: #ff3b30;
+    font-weight: 700;
+    margin-left: 6px;
 }
 
 /* media area at top, takes up most space */

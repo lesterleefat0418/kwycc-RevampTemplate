@@ -172,23 +172,53 @@ $html = $post && !empty($post->post_content) ? apply_filters('the_content', $pos
 // Query for activity posts
 $args = array(
     'post_type' => 'activity',
-    'posts_per_page' => 5,
+    'posts_per_page' => -1,
     'orderby' => 'meta_value',
     'meta_key' => '_activity_deadline',
     'order' => 'ASC',
-    'meta_query' => array(
-        array(
-            'key' => '_activity_deadline',
-            'value' => current_time('Y-m-d'),
-            'compare' => '>=',
-            'type' => 'DATE'
-        )
-    )
 );
 
 $query = new WP_Query($args);
-$total_posts = $query->found_posts;
-$show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
+$activity_items = array();
+
+if ($query->have_posts()) {
+    while ($query->have_posts()) {
+        $query->the_post();
+        $activity_id = get_the_ID();
+        $deadline = get_post_meta($activity_id, '_activity_deadline', true);
+        $total_seats = (int) get_post_meta($activity_id, '_activity_total_seats', true);
+        $booked_seats = (int) get_post_meta($activity_id, '_activity_booked_seats', true);
+        $remaining_seats = max(0, $total_seats - $booked_seats);
+        $is_full = ($remaining_seats <= 0);
+        $is_expired = revamppage_is_activity_expired($activity_id);
+        $expired_behavior = revamppage_get_activity_expired_behavior($activity_id);
+
+        if ($is_expired && $expired_behavior === 'hide') {
+            continue;
+        }
+
+        $registration_url = get_post_meta($activity_id, '_activity_registration_url', true);
+        if (empty($registration_url)) {
+            $registration_url = get_permalink($activity_id);
+        }
+
+        $deadline_display = $deadline ? date('d/m/Y', strtotime($deadline)) : 'N/A';
+        $activity_items[] = array(
+            'id' => $activity_id,
+            'title' => get_the_title(),
+            'registration_url' => $registration_url,
+            'deadline_display' => $deadline_display,
+            'remaining_seats' => $remaining_seats,
+            'total_seats' => $total_seats,
+            'is_full' => $is_full,
+            'is_expired' => $is_expired,
+            'expired_behavior' => $expired_behavior,
+        );
+    }
+    wp_reset_postdata();
+}
+
+$show_nav = count($activity_items) >= 5;
 ?>
 
 <!-- ✅ 新增容器包裝 scroll-wrap 和 nav 按鈕 -->
@@ -204,33 +234,26 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                <?php
                $index = 0;
 
-               if ($query->have_posts()):
-                   while ($query->have_posts()):
-                       $query->the_post();
-                       // Get custom fields
-                       $deadline = get_post_meta(get_the_ID(), '_activity_deadline', true);
-                       $total_seats = (int) get_post_meta(get_the_ID(), '_activity_total_seats', true);
-                       $booked_seats = (int) get_post_meta(get_the_ID(), '_activity_booked_seats', true);
-                       $remaining_seats = max(0, $total_seats - $booked_seats);
-                       $is_full = ($remaining_seats <= 0);
-
-                       // Get registration page URL
-                       $registration_url = get_post_meta(get_the_ID(), '_activity_registration_url', true);
-                       if (empty($registration_url)) {
-                           $registration_url = get_permalink();
-                       }
-
-                       $deadline_display = $deadline ? date('d/m/Y', strtotime($deadline)) : 'N/A';
+               if (!empty($activity_items)):
+                   foreach ($activity_items as $activity_item):
+                       $is_expired_disabled = !empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'disabled';
+                       $is_expired_active = !empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'active';
+                       $card_link_href = ($is_expired_disabled || $is_expired_active) ? esc_url($activity_item['registration_url']) : esc_url($activity_item['registration_url']);
+                       $card_link_class = $is_expired_disabled ? 'card-link is-disabled' : 'card-link';
+                       $card_class = 'kwycc-card' . ($is_expired_disabled ? ' is-expired' : '');
+                       $card_class .= $is_expired_active ? ' is-expired-active' : '';
+                       $card_title = esc_attr($activity_item['title']);
                        ?>
                        
-                       <article class="kwycc-card" data-index="<?php echo $index; ?>" role="article" aria-label="<?php echo esc_attr(get_the_title()); ?>" data-registration-url="<?php echo esc_attr($registration_url); ?>">
-                           <a href="<?php echo esc_url($registration_url); ?>" draggable="false" class="card-link" aria-label="<?php echo esc_attr(get_the_title()); ?> - 報名">
+                       <article class="<?php echo esc_attr($card_class); ?>" data-index="<?php echo $index; ?>" role="article" aria-label="<?php echo $card_title; ?>" data-registration-url="<?php echo esc_attr($activity_item['registration_url']); ?>" data-expired="<?php echo $is_expired_disabled ? '1' : '0'; ?>">
+                           <a href="<?php echo $card_link_href; ?>" draggable="false" class="<?php echo esc_attr($card_link_class); ?>" aria-label="<?php echo $card_title; ?> - 報名" <?php echo $is_expired_disabled ? 'aria-disabled="true" tabindex="-1" onclick="return false;"' : ''; ?>>
                                <div class="card-media">
                                    <?php
-                                   if (has_post_thumbnail()) {
-                                       the_post_thumbnail('medium', array('alt' => esc_attr(get_the_title())));
+                                   $thumbnail = get_the_post_thumbnail($activity_item['id'], 'medium', array('alt' => $card_title));
+                                   if (!empty($thumbnail)) {
+                                       echo $thumbnail;
                                    } else {
-                                       echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/placeholder.png') . '" alt="' . esc_attr(get_the_title()) . '">';
+                                       echo '<img src="' . esc_url(get_stylesheet_directory_uri() . '/images/placeholder.png') . '" alt="' . $card_title . '">';
                                    }
                                    ?>
                                </div>
@@ -241,8 +264,8 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                                            background-position: center;
                                            background-size: cover;">
                                    <div class="card-info">
-                                       <h4 class="card-title"><?php the_title(); ?></h4>
-                                       <p class="card-deadline">截止: <?php echo esc_html($deadline_display); ?></p>
+                                       <h4 class="card-title"><?php echo esc_html($activity_item['title']); ?></h4>
+                                       <p class="card-deadline">截止: <?php echo esc_html($activity_item['deadline_display']); ?><?php if (!empty($activity_item['is_expired']) && $activity_item['expired_behavior'] === 'active'): ?><span class="card-complete-tag">（已完結）</span><?php endif; ?></p>
                                    </div>
 
                                    <div class="card-footer"
@@ -251,10 +274,10 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
                                                background-position: center;
                                                background-size: contain;">
                                        <span class="card-status">尚餘名額</span>
-                                       <?php if ($is_full): ?>
+                                       <?php if ($activity_item['is_full']): ?>
                                            <span class="card-status full">已滿名額</span>
                                        <?php else: ?>
-                                           <span class="card-status seats"><?php echo esc_html($remaining_seats); ?>/<?php echo esc_html($total_seats); ?></span>
+                                           <span class="card-status seats"><?php echo esc_html($activity_item['remaining_seats']); ?>/<?php echo esc_html($activity_item['total_seats']); ?></span>
                                        <?php endif; ?>
                                    </div>
                                </div>
@@ -263,8 +286,7 @@ $show_nav = $total_posts >= 5; // ✅ 檢查是否需要顯示 nav
 
                        <?php
                        $index++;
-                   endwhile;
-                   wp_reset_postdata();
+                   endforeach;
                else:
                    echo '<p style="color: #fff; text-align: center; padding: 20px;">暫時未有暑期活動</p>';
                endif;

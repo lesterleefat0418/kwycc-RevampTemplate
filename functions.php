@@ -74,6 +74,28 @@ function revamppage_add_activity_meta_boxes()
 }
 add_action('add_meta_boxes', 'revamppage_add_activity_meta_boxes');
 
+function revamppage_is_activity_expired($post_id)
+{
+    $deadline = get_post_meta($post_id, '_activity_deadline', true);
+    if (empty($deadline)) {
+        return false;
+    }
+
+    return strtotime($deadline) < strtotime(current_time('Y-m-d'));
+}
+
+function revamppage_get_activity_expired_behavior($post_id)
+{
+    $behavior = get_post_meta($post_id, '_activity_expired_behavior', true);
+    if ($behavior === 'disabled') {
+        return 'disabled';
+    }
+    if ($behavior === 'active') {
+        return 'active';
+    }
+    return 'hide';
+}
+
 /**
  * Activity meta box callback
  */
@@ -90,6 +112,7 @@ function revamppage_activity_meta_box_callback($post)
     $activity_time = get_post_meta($post->ID, '_activity_time', true);
     $activity_short_desc = get_post_meta($post->ID, '_activity_short_desc', true);
     $activity_popularity = get_post_meta($post->ID, '_activity_popularity', true);
+    $expired_behavior = revamppage_get_activity_expired_behavior($post->ID);
     ?>
 
     <div style="padding: 10px 0;">
@@ -97,7 +120,7 @@ function revamppage_activity_meta_box_callback($post)
             <?php esc_html_e('Registration/Details Page URL', 'revamppage'); ?>
         </label>
         <input type="url" id="activity_registration_url" name="activity_registration_url" value="<?php echo esc_attr($registration_url); ?>" style="width: 100%; padding: 8px;">
-        <small style="color: #666; margin-top: 5px; display: block;">Leave empty to use the activity page itself</small>
+        <small style="color: #090909; margin-top: 5px; display: block;">Leave empty to use the activity page itself</small>
     </div>
     
     <div style="padding: 10px 0;">
@@ -105,6 +128,18 @@ function revamppage_activity_meta_box_callback($post)
             <?php esc_html_e('Activity Deadline', 'revamppage'); ?>
         </label>
         <input type="date" id="activity_deadline" name="activity_deadline" value="<?php echo esc_attr($deadline); ?>" style="width: 100%; padding: 8px;">
+    </div>
+
+    <div style="padding: 10px 0;">
+        <label for="activity_expired_behavior" style="display: block; font-weight: bold; margin-bottom: 5px;">
+            <?php esc_html_e('Expired Activity Display', 'revamppage'); ?>
+        </label>
+        <select id="activity_expired_behavior" name="activity_expired_behavior" style="width: 100%; padding: 8px;">
+            <option value="hide" <?php selected($expired_behavior, 'hide'); ?>><?php esc_html_e('Hide when expired (default)', 'revamppage'); ?></option>
+            <option value="disabled" <?php selected($expired_behavior, 'disabled'); ?>><?php esc_html_e('Show but greyed out and disabled', 'revamppage'); ?></option>
+            <option value="active" <?php selected($expired_behavior, 'active'); ?>><?php esc_html_e('Show normally, clickable, and mark as completed', 'revamppage'); ?></option>
+        </select>
+        <small style="color: #0b0b0b; margin-top: 5px; display: block;">Choose how expired activities should appear on the front page and activity archive.</small>
     </div>
 
     <div style="padding: 10px 0;">
@@ -179,6 +214,11 @@ function revamppage_save_activity_meta($post_id)
     // Save all meta fields
     if (isset($_POST['activity_deadline'])) {
         update_post_meta($post_id, '_activity_deadline', sanitize_text_field($_POST['activity_deadline']));
+    }
+
+    if (isset($_POST['activity_expired_behavior'])) {
+        $expired_behavior = in_array($_POST['activity_expired_behavior'], array('hide', 'disabled', 'active'), true) ? sanitize_text_field($_POST['activity_expired_behavior']) : 'hide';
+        update_post_meta($post_id, '_activity_expired_behavior', $expired_behavior);
     }
 
     if (isset($_POST['activity_total_seats'])) {
